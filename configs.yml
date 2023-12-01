@@ -19,21 +19,21 @@ NSwake:
   output_size: 3
   weight: {'in': 1, 'bd': 1, 'init': 1}
 
-AllenCahn1D:
+AllenCahn2D:
   xlim: [-1, 1]
   tlim: [0, 1]
   input_size: 2
   output_size: 1
   weight: { 'in': 1, 'bd': 0.1, "init": 0.1 }
 
-AC1DHC:
+AC2DHC:
   xlim: [-1, 1]
   tlim: [0, 1]
   input_size: 2
   output_size: 1
   weight: {'in': 1}
 
-KdV1D:
+KdV2D:
   xlim: [ -1, 1 ]
   tlim: [ 0, 1 ]
   input_size: 2
@@ -41,7 +41,7 @@ KdV1D:
   weight: { 'in': 1, 'bd': 1, "init": 1 }
   lam: [1.0, 0.0025]
 
-Burgers1D:
+Burgers2D:
   xlim: [-1, 1]
   tlim: [0, 1]
   viscosity: 0.01/np.pi
@@ -49,7 +49,7 @@ Burgers1D:
   output_size: 1
   weight: {'in': 1, 'bd':1, "init":1}
 
-Burgers2D:
+Burgers3D:
   tlim: [ 0, 1 ]
   xlim: [ 0, 1 ]
   ylim: [ 0, 1 ]
@@ -83,7 +83,7 @@ Poisson2DLshape:
 
 
 
-Heat2D:
+Heat3D:
   tlim: [0, 1]
   xlim: [0, 1]
   ylim: [0, 1]
@@ -92,7 +92,7 @@ Heat2D:
   weight: {'in': 1, 'bd': 1, 'init': 1}
 
 
-Wave2D:
+Wave3D:
   tlim: [0, 1]
   xlim: [0, 1]
   ylim: [0, 1]

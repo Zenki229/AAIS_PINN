@@ -140,16 +140,20 @@ class Burgers2D:
             # plot loss
             plot = ax[0].pcolormesh(mesh_x, mesh_y, val, shading='gouraud', cmap='jet', vmin=0, vmax=np.max(val))
             fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title('residual')
+            ax[0].set_title(f'residual $\\mathcal{{Q}}_{num}$')
+            ax[0].set_xlabel('$t$')
+            ax[0].set_ylabel('$x$')
             # plot node
             ax[1].set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
             ax[1].set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.15)
             ax[1].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.1, label='before')
+                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label='before')
             ax[1].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
                           s=np.ones_like(node_add[:, 0]), alpha=1.0, label='now')
             ax[1].legend(loc='upper right')
             ax[1].set_title('nodes')
+            ax[1].set_xlabel('$t$')
+            ax[1].set_ylabel('$x$')
             plt.savefig(path + f'/{num}_loss.png', dpi=300)
             plt.close()
         if proposal:
@@ -159,21 +163,27 @@ class Burgers2D:
             plot = ax[0].pcolormesh(mesh_x, mesh_y, val, shading='gouraud',
                                     cmap='jet', vmin=0, vmax=np.max(val))
             fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title('residual')
+            ax[0].set_title(f'residual $\\mathcal{{Q}}_{num}$')
+            ax[0].set_xlabel('$t$')
+            ax[0].set_ylabel('$x$')
             # plot proposal
             plot = ax[1].pcolormesh(mesh_x, mesh_y, val_prop, shading='gouraud',
                                     cmap='jet', vmin=0, vmax=np.max(val_prop))
             fig.colorbar(plot, ax=ax[1], format="%1.1e")
             ax[1].set_title('proposal')
+            ax[1].set_xlabel('$t$')
+            ax[1].set_ylabel('$x$')
             # plot node
             ax[2].set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
             ax[2].set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.15)
             ax[2].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.1, label='before')
+                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{num}$')
             ax[2].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label='now')
+                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
             ax[2].legend(loc='upper right')
             ax[2].set_title('nodes')
+            ax[2].set_xlabel('$t$')
+            ax[2].set_ylabel('$x$')
             plt.savefig(path + f'/{num}_loss.png', dpi=300)
             plt.close()
 
@@ -192,31 +202,37 @@ class Burgers2D:
         plot = axes[0, 0].pcolormesh(X, Y, err_plt.reshape(X.shape), shading='gouraud',
                                      cmap='jet', vmin=0, vmax=np.max(err_plt))
         fig.colorbar(plot, ax=axes[0, 0], format="%1.1e")
-        axes[0, 0].set_title(f'RE = {round(err, 4)}')
+        axes[0, 0].set_title(f'$e_r(u^\\theta_{num})$={round(err, 4)}')
+        axes[0, 0].set_xlabel('$t$')
+        axes[0, 0].set_ylabel('$x$')
         # plot predict
         plot = axes[0, 1].pcolormesh(X, Y, val.reshape(X.shape), shading='gouraud',
                                      cmap='jet', vmin=-1.05, vmax=1.05)
         fig.colorbar(plot, ax=axes[0, 1], format="%1.1e")
-        axes[0, 1].set_title(f'predict')
+        axes[0, 1].set_title(f'$u^\\theta_{num}$')
+        axes[0, 1].set_xlabel('$t$')
+        axes[0, 1].set_ylabel('$x$')
         # plot exact
         plot = axes[0, 2].pcolormesh(X, Y, exact, shading='gouraud',
                                      cmap='jet', vmin=-1.05, vmax=1.05)
         fig.colorbar(plot, ax=axes[0, 2], format="%1.1e")
-        axes[0, 2].set_title(f'exact')
+        axes[0, 2].set_title(f'$u^*$')
+        axes[0, 2].set_xlabel('$t$')
+        axes[0, 2].set_ylabel('$x$')
         # plot at t
         t_plt = [0.10, 0.50, 0.90]
-        count = 0
-        for t_now in t_plt:
+        for count, t_now in enumerate(t_plt):
             ind = np.where(t == t_now)[0]
             sol_t = exact[ind, :]
             node = np.concatenate((np.ones_like(x) * t[ind], x), axis=1)
             node = torch.from_numpy(node).to(device=self.dev)
             val_t = net(node).detach().cpu().numpy().flatten()
-            axes[1, count].plot(x, sol_t.flatten(), 'b--', label='exact')
-            axes[1, count].plot(x, val_t, 'r', label='predict')
+            axes[1, count].plot(x, sol_t.flatten(), 'b--', label=f'$u^*({t_now}, x)$')
+            axes[1, count].plot(x, val_t, 'r', label=f'$u^\\theta_{num}({t_now}, x)$')
             err = np.sqrt(np.sum(np.power(val_t - sol_t, 2)) / np.sum(np.power(sol_t, 2)))
-            axes[1, count].set_title(f't = {t_now}, RET = {err}')
+            axes[1, count].set_title(f'$e_t(u^\\theta_{num},{t_now})={round(err, 4)}$')
             axes[1, count].legend(loc='upper right')
+            axes[1, count].set_xlabel('$x$')
             count += 1
         plt.savefig(path + f'/{num}_sol.png')
         plt.close()

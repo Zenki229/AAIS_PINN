@@ -122,7 +122,7 @@ class Poisson2D1Peak:
             # plot loss
             plot = ax[0].pcolormesh(mesh_x, mesh_y, val, shading='gouraud', cmap='jet', vmin=0, vmax=np.max(val))
             fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title(f'Residual $\\mathcal{{Q}}_{num}$')
+            ax[0].set_title(f'residual $\\mathcal{{Q}}_{num}$')
             ax[0].set_xlabel('$x$')
             ax[0].set_ylabel('$y$')
             # plot node
@@ -145,7 +145,7 @@ class Poisson2D1Peak:
             plot = ax[0].pcolormesh(mesh_x, mesh_y, val, shading='gouraud',
                                     cmap='jet', vmin=0, vmax=np.max(val))
             fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title(f'Residual $\\mathcal{{Q}}_{num}$')
+            ax[0].set_title(f'residual $\\mathcal{{Q}}_{num}$')
             ax[0].set_xlabel('$x$')
             ax[0].set_ylabel('$y$')
             # plot proposal
@@ -182,14 +182,14 @@ class Poisson2D1Peak:
         plot = ax[0].pcolormesh(mesh_x, mesh_y, err_plt.reshape(mesh_x.shape), shading='gouraud',
                                 cmap='jet', vmin=0, vmax=np.max(err_plt))
         fig.colorbar(plot, ax=ax[0], format="%1.1e")
-        ax[0].set_title(f'$e_r(u)$={round(err, 4)}')
+        ax[0].set_title(f'$e_r(u^\\theta_{num})={round(err, 4)}$')
         ax[0].set_xlabel('$x$')
         ax[0].set_ylabel('$y$')
         # val plot
         plot = ax[1].pcolormesh(mesh_x, mesh_y, val.reshape(mesh_x.shape), shading='gouraud',
                                 cmap='jet', vmin=np.min(val), vmax=np.max(val))
         fig.colorbar(plot,  ax=ax[1], format="%1.1e")
-        ax[1].set_title(f'$u_\\theta$')
+        ax[1].set_title(f'$u^\\theta_{num}$')
         ax[1].set_xlabel('$x$')
         ax[1].set_ylabel('$y$')
         # exact plot
@@ -338,7 +338,7 @@ class Poisson2D9Peak:
             # plot loss
             plot = ax[0].pcolormesh(mesh_x, mesh_y, val, shading='gouraud', cmap='jet', vmin=0, vmax=np.max(val))
             fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title(f'Residual $\\mathcal{{Q}}_{num}$')
+            ax[0].set_title(f'residual $\\mathcal{{Q}}_{num}$')
             ax[0].set_xlabel('$x$')
             ax[0].set_ylabel('$y$')
             # plot node
@@ -361,7 +361,7 @@ class Poisson2D9Peak:
             plot = ax[0].pcolormesh(mesh_x, mesh_y, val, shading='gouraud',
                                     cmap='jet', vmin=0, vmax=np.max(val))
             fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title(f'Residual $\\mathcal{{Q}}_{num}$')
+            ax[0].set_title(f'residual $\\mathcal{{Q}}_{num}$')
             ax[0].set_xlabel('$x$')
             ax[0].set_ylabel('$y$')
             # plot proposal
@@ -398,14 +398,14 @@ class Poisson2D9Peak:
         plot = ax[0].pcolormesh(mesh_x, mesh_y, err_plt.reshape(mesh_x.shape), shading='gouraud',
                                 cmap='jet', vmin=0, vmax=np.max(err_plt))
         fig.colorbar(plot, ax=ax[0], format="%1.1e")
-        ax[0].set_title(f'$e_r(u)$={round(err, 4)}')
+        ax[0].set_title(f'$e_r(u^\\theta_{num})={round(err, 4)}$')
         ax[0].set_xlabel('$x$')
         ax[0].set_ylabel('$y$')
         # val plot
         plot = ax[1].pcolormesh(mesh_x, mesh_y, val.reshape(mesh_x.shape), shading='gouraud',
                                 cmap='jet', vmin=np.min(val), vmax=np.max(val))
         fig.colorbar(plot, ax=ax[1], format="%1.1e")
-        ax[1].set_title(f'$u_\\theta$')
+        ax[1].set_title(f'$u^\\theta_{num}$')
         ax[1].set_xlabel('$x$')
         ax[1].set_ylabel('$y$')
         # exact plot
@@ -555,7 +555,7 @@ class Poisson2DLshape:
             # plot loss
             plot = ax[0].pcolormesh(mesh_x, mesh_y, val.reshape(161, 161), shading='gouraud', cmap='jet')
             fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title(f'Residual $\\mathcal{{Q}}_{num}$')
+            ax[0].set_title(f'residual $\\mathcal{{Q}}_{num}$')
             ax[0].set_xlabel('$x$')
             ax[0].set_ylabel('$y$')
             # plot node
@@ -575,9 +575,9 @@ class Poisson2DLshape:
 
             fig, ax = plt.subplots(1, 3, layout='constrained', figsize=(19.2, 4.8))
             # plot loss
-            plot = ax[0].scatter(node[:, 0], node[:, 1], c=val, cmap='jet')
+            plot = ax[0].pcolormesh(mesh_x, mesh_y, val.reshape(161, 161), shading='gouraud', cmap='jet')
             fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title('loss')
+            ax[0].set_title(f'residual $\\mathcal{{Q}}_{num}$')
             ax[0].set_xlabel('$x$')
             ax[0].set_ylabel('$y$')
             # plot node
@@ -594,7 +594,7 @@ class Poisson2DLshape:
             # plot proposal
             val_prop = proposal(node)
             val_prop[ind] = np.nan
-            plot = ax[1].scatter(node[:, 0], node[:, 1], c=val_prop, cmap='jet')
+            plot = ax[1].pcolormesh(mesh_x, mesh_y, val_prop.reshape(mesh_x.shape), cmap='jet')
             fig.colorbar(plot, ax=ax[1], format="%1.1e")
             ax[1].set_title('proposal')
             ax[1].set_xlabel('$x$')
@@ -620,13 +620,13 @@ class Poisson2DLshape:
         # err plot
         plot = ax[0].pcolormesh(mesh_x, mesh_y, err_plt.reshape(mesh_x.shape), shading='gouraud', cmap='jet')
         fig.colorbar(plot, ax=ax[0], format="%1.1e")
-        ax[0].set_title(f'$e_r(u)$={round(err, 4)}')
+        ax[0].set_title(f'$e_r(u^\\theta_{num})={round(err, 4)}$')
         ax[0].set_xlabel('$x$')
         ax[0].set_ylabel('$y$')
         # val plot
         plot = ax[1].pcolormesh(mesh_x, mesh_y, val_plt.reshape(mesh_x.shape), shading='gouraud', cmap='jet')
         fig.colorbar(plot,  ax=ax[1], format="%1.1e")
-        ax[1].set_title(f'$\\u_\\theta')
+        ax[1].set_title(f'$u^\\theta_{num}$')
         ax[1].set_xlabel('$x$')
         ax[1].set_ylabel('$y$')
         # exact plot
