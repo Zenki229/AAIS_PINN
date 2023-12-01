@@ -174,8 +174,7 @@ def main():
         'sample_method': sample_method_choose,
         'IS_sign': IS_sign,
         'max_iter': args.max_iter,
-        'loss_tol': args.loss_tol,
-        'sample_type': args.sample_type
+        'loss_tol': args.loss_tol
     }
     if 'resample' in args.strategy:
         go_train = train_resample(**params)

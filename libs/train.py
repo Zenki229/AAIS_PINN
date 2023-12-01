@@ -9,7 +9,7 @@ import time
 
 class train_resample:
     def __init__(self, pde, net, dev, optimizer, scheduler, lbfgs, optim_epoch, file_path, logger: logging,
-                  num_add, num_search, max_iter, loss_tol, sample_method, IS_sign, sample_type
+                  num_add, num_search, max_iter, loss_tol, sample_method, IS_sign
                  ):
         self.net = net
         self.pde = pde
@@ -27,7 +27,6 @@ class train_resample:
         self.loss_tol = loss_tol
         self.num_search = num_search
         self.IS_sign = IS_sign
-        self.sample_type = sample_type
 
     def forward(self):
         def target(node):
@@ -86,12 +85,7 @@ class train_resample:
                                                num=count)
             t2 = time.time() - t1
             log.info('=' * 3 + 'End sample time' + time.strftime("%H:%M:%S", time.gmtime(t2)) + '=' * 10)
-            if 'combine' in self.sample_type:
-                node['in'] = torch.unique(torch.cat((node['in'].detach(), node_loss), dim=0), dim=0)
-            elif 'split' in self.sample_type:
-                node['in'] = torch.clone(node_loss)
-            else:
-                raise ValueError('invalid sample_type')
+            node['in'] = torch.unique(torch.cat((node['in'].detach(), node_loss), dim=0), dim=0)
             self.logger.info('=' * 3 + f'{count}-th Training with node shape {node["in"].shape[0]}' + '=' * 10)
             t1 = time.time()
             rec = run_train(self.net, self.pde, node, self.epoch,
@@ -111,7 +105,7 @@ class train_resample:
 
 class train_add:
     def __init__(self, pde, net, dev, optimizer, scheduler, lbfgs, optim_epoch, file_path, logger: logging,
-                  num_add, num_search, max_iter, loss_tol, sample_method, IS_sign, sample_type
+                  num_add, num_search, max_iter, loss_tol, sample_method, IS_sign
                  ):
         self.net = net
         self.pde = pde
@@ -129,7 +123,6 @@ class train_add:
         self.loss_tol = loss_tol
         self.num_search = num_search
         self.IS_sign = IS_sign
-        self.sample_type = sample_type
 
     def forward(self):
         def target(node):
@@ -163,12 +156,6 @@ class train_add:
         self.pde.test_err_plot(self.net, self.file_path + '/test', 0)
         count = 1
         node = node_domain.copy()
-        if 'combine' in self.sample_type:
-            pass
-        elif 'split' in self.sample_type:
-            node['in'] = torch.zeros((0, self.pde.dim))
-        else:
-            raise ValueError('invalid sample_type')
         while (loss_test > self.loss_tol) & (count <= self.max_iter):
             if self.IS_sign:
                 log.info('=' * 3 + f'{count}-th ' + f'{self.sample_method.__class__.__name__}' +f' with num {node_search.shape[0]}' + '=' * 10)
