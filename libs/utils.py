@@ -11,9 +11,8 @@ from collections import defaultdict
 from contextlib import contextmanager
 from datetime import date
 from time import time
+import matplotlib
 
-import matplotlib.pyplot as plt
-from matplotlib import rc, rcParams, tri
 import numpy as np
 import pandas as pd
 import psutil
@@ -21,28 +20,34 @@ import platform
 import subprocess
 import re
 import torch
+import logging
+import tabulate
 import torch.nn as nn
 from tqdm.auto import tqdm
 import h5py
 from scipy.io import loadmat
-
+matplotlib.use('agg')
+from matplotlib import rc, rcParams, tri, cm
+from matplotlib.colors import TwoSlopeNorm
+import matplotlib.pyplot as plt
 try:
     import plotly.express as px
     import plotly.figure_factory as ff
     import plotly.graph_objects as go
     import plotly.io as pio
+    from plotly.subplots import make_subplots
 except ImportError as e:
-    print('Plotly not installed. Plotly is used to plot meshes')
+    print('Plotly not installed. Plotly is used to plot meshes. Run 3D code like Wave2D, NS equation should install plotly')
 
 
 def get_size(bytes, suffix='B'):
-    """
+    '''
     by Fred Cirera,  https://stackoverflow.com/a/1094933/1870254, modified
     Scale bytes to its proper format
     e.g:
         1253656 => '1.20MiB'
         1253656678 => '1.17GiB'
-    """
+    '''
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
         if abs(bytes) < 1024.0:
             return f"{bytes:3.2f} {unit}{suffix}"
@@ -171,12 +176,12 @@ def color(string: str, color: Colors = Colors.yellow) -> str:
 
 @contextmanager
 def timer(label: str, compact=False) -> None:
-    """
+    '''
     https://www.kaggle.com/c/riiid-test-answer-prediction/discussion/203020#1111022
     print
     1. the time the code block takes to run
     2. the memory usage.
-    """
+    '''
     p = psutil.Process(os.getpid())
     m0 = p.memory_info()[0] / 2. ** 30
     start = time()  # Setup - __enter__
@@ -296,6 +301,7 @@ class DotDict(dict):
         self.update(state)
         self.__dict__ = self
 
+
 def load_yaml(filename, key=None):
     with open(filename) as f:
         dictionary = yaml.full_load(f)
@@ -303,6 +309,21 @@ def load_yaml(filename, key=None):
         return DotDict(dictionary)
     else:
         return DotDict(dictionary[key])
+
+def log_gen(path):
+    logger = logging.getLogger('logger')
+    logger.setLevel(logging.INFO)
+    hdlr_f = logging.FileHandler(filename=path + '/logger.log', mode = 'w')
+    hdlr_f.setLevel(logging.INFO)
+    hdlr_s = logging.StreamHandler()
+    hdlr_s.setLevel(logging.INFO)
+    fmt_s = logging.Formatter(fmt="%(asctime)s: %(message)s", datefmt="%Y/%m/%d %H:%M:%S")
+    fmt_f = logging.Formatter(fmt="%(asctime)s - %(name)s - %(levelname)-9s - %(filename)-8s : %(lineno)s line - %(message)s", datefmt="%Y/%m/%d %H:%M:%S")
+    hdlr_s.setFormatter(fmt_s)
+    hdlr_f.setFormatter(fmt_f)
+    logger.addHandler(hdlr_s)
+    logger.addHandler(hdlr_f)
+    return logger
 
 def showmesh(node, elem, **kwargs):
     triangulation = tri.Triangulation(node[:, 0], node[:, 1], elem)
@@ -419,6 +440,27 @@ def showcontour(z, **kwargs):
     return fig
 
 
+def shownode(node, ax: plt.axes, **kargs):
+    """
+    plot discrete nodes on the fig in 2D
+    node : a 2D array, the first column is the x-axis the second column is the y-axis
+    ax: the axes of input figure
+    **kargs: some settings of figure.
+    """
+    ax.plot(node[:,0], node[:,1], **kargs)
+    return ax
+
+
 if __name__ == "__main__":
     get_system()
     get_memory()
+    # fig, ax = plt.subplots(figsize=(5,5),layout='constrained')
+    # ax.set_xlim(left=0., right=1.)
+    # ax.set_ylim(ymin=0., ymax=1.)
+    # intervalx = np.arange(start=0.1, stop=1, step=0.1)
+    # intervaly = np.arange(start=0.1, stop=1, step=0.2)
+    # X, Y = np.meshgrid(intervalx, intervaly)
+    # node = np.stack([X,Y], axis=-1).reshape((-1,2))
+    # # print(node)
+    # shownode(node, ax, marker='.', markersize=1, color='r', linestyle='none')
+    # plt.show()

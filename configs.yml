@@ -1,1 +1,132 @@
-# Input parameter setting
+NSCylinder:
+  xlim: [0, 2.2]
+  ylim: [0, 0.41]
+  tlim: [0, 8]
+  viscosity: 0.001
+  density: 1
+  center: [0.2, 0.2]
+  radius: 0.05
+  input_size: 3
+  output_size: 3
+  weight: {'in': 1, 'wall':1, 'inflow':1, 'outflow':1, "init":1}
+
+NSwake:
+  tlim: [0, 7]
+  xlim: [1, 8]
+  ylim: [-2, 2]
+  viscosity: 0.01
+  input_size: 3
+  output_size: 3
+  weight: {'in': 1, 'bd': 1, 'init': 1}
+
+AllenCahn1D:
+  xlim: [-1, 1]
+  tlim: [0, 1]
+  input_size: 2
+  output_size: 1
+  weight: { 'in': 1, 'bd': 0.1, "init": 0.1 }
+
+AC1DHC:
+  xlim: [-1, 1]
+  tlim: [0, 1]
+  input_size: 2
+  output_size: 1
+  weight: {'in': 1}
+
+KdV1D:
+  xlim: [ -1, 1 ]
+  tlim: [ 0, 1 ]
+  input_size: 2
+  output_size: 1
+  weight: { 'in': 1, 'bd': 1, "init": 1 }
+  lam: [1.0, 0.0025]
+
+Burgers1D:
+  xlim: [-1, 1]
+  tlim: [0, 1]
+  viscosity: 0.01/np.pi
+  input_size: 2
+  output_size: 1
+  weight: {'in': 1, 'bd':1, "init":1}
+
+Burgers2D:
+  tlim: [ 0, 1 ]
+  xlim: [ 0, 1 ]
+  ylim: [ 0, 1 ]
+  Renold: 5000
+  input_size: 3
+  output_size: 2
+  weight: { 'in': 1, 'bd': 1, 'init': 1 }
+
+Poisson2D9Peak:
+  xlim: [-1, 1]
+  ylim: [-1, 1]
+  input_size: 2
+  output_size: 1
+  weight: {'in': 1, 'bd': 1}
+
+Poisson2D1Peak:
+  xlim: [-1, 1]
+  ylim: [-1, 1]
+  input_size: 2
+  output_size: 1
+  weight: {'in': 1, 'bd': 1}
+
+Poisson2DLshape:
+  xlim: [-1, 1]
+  ylim: [-1, 1]
+  x2lim: [0, 1]
+  y2lim: [0, 1]
+  input_size: 2
+  output_size: 1
+  weight: {'in': 1, 'bd': 1}
+
+
+
+Heat2D:
+  tlim: [0, 1]
+  xlim: [0, 1]
+  ylim: [0, 1]
+  input_size: 3
+  output_size: 1
+  weight: {'in': 1, 'bd': 1, 'init': 1}
+
+
+Wave2D:
+  tlim: [0, 1]
+  xlim: [0, 1]
+  ylim: [0, 1]
+  input_size: 3
+  output_size: 1
+  weight: {'in': 1, 'bd': 0.1, 'init': 0.1}
+
+
+AAIS_g:
+  a_ladder: [0.7,0.9,1.0]
+  ess_dict: {'merge': 0.85, 'delete': 0.000000001, 'add': 0.15, 'ladder':[0.90,0.88,0.85]}
+  count_dict: {'total': 300, 'add': 100, 'ladder': [100,100,100]}
+
+AAIS_t:
+  a_ladder: [0.7,0.9,1.0]
+  ess_dict: {'merge': 0.85, 'delete': 0.000000001, 'add': 0.15, 'ladder':[0.90,0.88,0.85]}
+  count_dict: {'total': 300, 'add': 100, 'ladder': [100,100,100]}
+  df: 3
+  
+AAIS_t_highess:
+  a_ladder: [0.1,0.4,0.7,0.8,0.9,0.95,0.97,1.0]
+  ess_dict: {'merge': 0.85, 'delete': 0.000000001, 'add': 0.15, 'ladder':[0.95,0.95,0.90,0.90,0.88,0.88,0.85,0.85]}
+  count_dict: {'total': 1000, 'add': 100, 'ladder': [100,100,100,100,100,100,200,200]}
+  df: 3
+
+AAIS_g_highess:
+  a_ladder: [0.1,0.4,0.7,0.8,0.9,0.95,0.97,1.0]
+  ess_dict: {'merge': 0.85, 'delete': 0.000000001, 'add': 0.15, 'ladder':[0.95,0.95,0.90,0.90,0.88,0.88,0.85,0.85]}
+  count_dict: {'total': 1000, 'add': 100, 'ladder': [100,100,100,100,100,100,200,200]}
+
+
+  
+  
+  
+  
+  
+
