@@ -38,6 +38,10 @@ try:
     from plotly.subplots import make_subplots
 except ImportError as e:
     print('Plotly not installed. Plotly is used to plot meshes. Run 3D code like Wave2D, NS equation should install plotly')
+plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "Helvetica"
+})
 
 
 def get_size(bytes, suffix='B'):

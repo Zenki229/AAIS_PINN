@@ -79,11 +79,11 @@ def main():
         from libs.Heat import Heat2D
         pde = Heat2D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1], **configs)
     elif 'Burgers2D' in args.pde:
-        from libs.Burgers import Burgers1D
-        pde = Burgers1D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1], **configs)
-    elif 'Burgers3D' in args.pde:
         from libs.Burgers import Burgers2D
-        pde = Burgers2D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1],
+        pde = Burgers2D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1], **configs)
+    elif 'Burgers3D' in args.pde:
+        from libs.Burgers import Burgers3D
+        pde = Burgers3D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1],
                         **configs)
     elif 'NSCylinder' in args.pde:
         from libs.NavierStokes import NSCylinder
@@ -92,12 +92,12 @@ def main():
         from libs.NavierStokes import NSWake
         pde = NSWake(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1], **configs)
     elif 'AllenCahn2D' in args.pde:
-        from libs.AllenCahn import AllenCahn1D
-        pde = AllenCahn1D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1],
+        from libs.AllenCahn import AllenCahn2D
+        pde = AllenCahn2D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1],
                           **configs)
     elif 'AC2DHC' in args.pde:
-        from libs.AllenCahn import AC1DHC
-        pde = AC1DHC(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1],
+        from libs.AllenCahn import AC2DHC
+        pde = AC2DHC(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1],
                      **configs)
     elif 'KdV2D' in args.pde:
         from libs.KdV import KdV1D

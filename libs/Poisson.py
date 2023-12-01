@@ -3,17 +3,14 @@ from .utils import *
 
 class Poisson2D1Peak:
     def __init__(self, dev, dtp, weight, xlim, ylim, num_in, num_bd, input_size, output_size):
-        self.dim, self.dev, self.dtp, self.weight, self.xlim, self.ylim, self.input_size, self.output_size \
-            = 2, dev, dtp, weight, xlim, ylim, input_size, output_size
+        self.dim, self.dev, self.dtp, self.weight, self.xlim, self.ylim, self.input_size, self.output_size = 2, dev, dtp, weight, xlim, ylim, input_size, output_size
         self.criterion = torch.nn.MSELoss()
         self.physics = ['in', 'bd']
         self.size = {'in': num_in, 'bd': num_bd}
 
     def sample(self, size, mode):
-        xs, xe = self.xlim[0], self.xlim[1]
-        x_len = xe - xs
-        ys, ye = self.ylim[0], self.ylim[1]
-        y_len = ye - ys
+        xs, xe, ys, ye = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1]
+        x_len, y_len = xe - xs, ye - ys
         if mode == 'in':
             node_in = torch.cat(
                 (torch.rand([size, 1]) * x_len + torch.ones(size=[size, 1]) * xs,
@@ -43,12 +40,8 @@ class Poisson2D1Peak:
                         torch.rand([num, 1]) * y_len + torch.ones([num, 1]) * ys], dim=1)
             return torch.cat(node_bd, dim=0).to(device=self.dev, dtype=self.dtp)
 
-    def solve(self, mode, node):
-        """
-        node is a dict{"in": node_in, "bd":node_bd}
-        mode is a string that can be "rhs", "bd" or "exact"
-        return a dict{"in": val_in, "bd": val_bd} or a tensor depending on the mode
-        """
+    @staticmethod
+    def solve(mode, node):
         if mode == 'in':
             val_in = (-(torch.exp(-1000 * ((node[:, 0] - 0.5) ** 2 + (node[:, 1] - 0.5) ** 2))
                         * (torch.pow((-2 * 1000) * (node[:, 0] - 0.5), 2) + (-2 * 1000)))
@@ -62,12 +55,6 @@ class Poisson2D1Peak:
             raise ValueError('Invalid mode')
 
     def residual(self, node, net, cls, mode):
-        """
-        compute the pde residual in the domain,
-        cls: "loss" compute the MSELoss from pde
-              "ele" elementwise residual
-        mode is a string that can be "in", "bd" computing value in the domain or on the boundary
-        """
         pred = self.solve(mode=mode, node=node)
         if mode == 'in':
             x = node
@@ -102,10 +89,7 @@ class Poisson2D1Peak:
             raise ValueError('Invalid mode')
 
     def grid(self, size):
-        xs = self.xlim[0]
-        xe = self.xlim[1]
-        ys = self.ylim[0]
-        ye = self.ylim[1]
+        xs, xe, ys, ye = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1]
         inter_x = np.linspace(start=xs, stop=xe, num=size + 1)
         inter_y = np.linspace(start=ys, stop=ye, num=size + 1)
         mesh_x, mesh_y = np.meshgrid(inter_x, inter_y)
@@ -124,41 +108,12 @@ class Poisson2D1Peak:
         err = np.sqrt(np.sum(np.power(val - exact, 2)) / np.sum(np.power(exact, 2)))
         return err
 
-    def scat_node_dict(self, node_domain, node_add, fname):
-        node_all = torch.cat([node_domain['in'].detach(),
-                              node_domain['bd'].detach()])
-        node_all = node_all.cpu().numpy()
-        node_add = node_add.detach().cpu().numpy()
-        xs, xe = self.xlim[0], self.xlim[1]
-        ys, ye = self.ylim[0], self.ylim[1]
-        fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
-        ax.set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.05)
-        ax.set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.05)
-        ax.scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                   s=np.ones_like(node_all[:, 0]), alpha=0.5, label='before')
-        ax.scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                   s=np.ones_like(node_add[:, 0]), alpha=1.0, label='add')
-        ax.legend(loc='upper right')
-        plt.savefig(fname, dpi=300)
-        plt.close()
-
-    def target_plot(self, target, path):
-        mesh_x, mesh_y = self.grid(size=256)
-        node = np.stack((mesh_x.flatten(), mesh_y.flatten()), axis=1)
-        val = target(node).reshape(mesh_x.shape)
-        fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
-        plot = ax.pcolormesh(mesh_x, mesh_y, val, shading='gouraud', cmap='jet', vmin=0, vmax=np.max(val))
-        fig.colorbar(plot, ax=ax, format="%1.1e")
-        plt.savefig(path + '.png', dpi=300)
-        plt.close()
-
     def target_node_plot_together(self, node_domain, node_add, loss, proposal, IS_sign, path, num):
         node_all = torch.cat([node_domain['in'].detach(),
                               node_domain['bd'].detach()])
         node_all = node_all.cpu().numpy()
         node_add = node_add.detach().cpu().numpy()
-        xs, xe = self.xlim[0], self.xlim[1]
-        ys, ye = self.ylim[0], self.ylim[1]
+        xs, xe, ys, ye = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1]
         mesh_x, mesh_y = self.grid(size=256)
         node = np.stack((mesh_x.flatten(), mesh_y.flatten()), axis=1)
         val = loss(node).reshape(mesh_x.shape)
@@ -167,16 +122,20 @@ class Poisson2D1Peak:
             # plot loss
             plot = ax[0].pcolormesh(mesh_x, mesh_y, val, shading='gouraud', cmap='jet', vmin=0, vmax=np.max(val))
             fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title('loss')
+            ax[0].set_title(f'Residual $\\mathcal{{Q}}_{num}$')
+            ax[0].set_xlabel('$x$')
+            ax[0].set_ylabel('$y$')
             # plot node
             ax[1].set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
             ax[1].set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.15)
             ax[1].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.2, label='before')
+                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\\\mathcal{{S}}_{num}$')
             ax[1].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label='add')
-            ax[1].legend(loc='upper right')
-            ax[1].set_title('nodes')
+                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=r'$\mathcal{D}')
+            ax[1].legend(loc='upper right', fontsize=12)
+            ax[1].set_title(f'nodes')
+            ax[1].set_xlabel('$x$')
+            ax[1].set_ylabel('$y$')
             plt.savefig(path + f'/{num}_loss.png', dpi=300)
             plt.close()
         if proposal:
@@ -186,21 +145,27 @@ class Poisson2D1Peak:
             plot = ax[0].pcolormesh(mesh_x, mesh_y, val, shading='gouraud',
                                     cmap='jet', vmin=0, vmax=np.max(val))
             fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title('loss')
+            ax[0].set_title(f'Residual $\\mathcal{{Q}}_{num}$')
+            ax[0].set_xlabel('$x$')
+            ax[0].set_ylabel('$y$')
             # plot proposal
             plot = ax[1].pcolormesh(mesh_x, mesh_y, val_prop, shading='gouraud',
                                     cmap='jet', vmin=0, vmax=np.max(val_prop))
             fig.colorbar(plot, ax=ax[1], format="%1.1e")
             ax[1].set_title('proposal')
+            ax[1].set_xlabel('$x$')
+            ax[1].set_ylabel('$y$')
             # plot node
             ax[2].set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
             ax[2].set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.15)
             ax[2].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label='before')
+                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\\\mathcal{{S}}_{num}$')
             ax[2].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label='add')
-            ax[2].legend(loc='upper right')
+                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=r'$\mathcal{D}')
+            ax[2].legend(loc='upper right', fontsize=12)
             ax[2].set_title('nodes')
+            ax[2].set_xlabel('$x$')
+            ax[2].set_ylabel('$y$')
             plt.savefig(path + f'/{num}_loss.png', dpi=300)
             plt.close()
 
@@ -217,25 +182,30 @@ class Poisson2D1Peak:
         plot = ax[0].pcolormesh(mesh_x, mesh_y, err_plt.reshape(mesh_x.shape), shading='gouraud',
                                 cmap='jet', vmin=0, vmax=np.max(err_plt))
         fig.colorbar(plot, ax=ax[0], format="%1.1e")
-        ax[0].set_title(f'relative error {round(err, 6)}')
+        ax[0].set_title(f'$e_r(u)$={round(err, 4)}')
+        ax[0].set_xlabel('$x$')
+        ax[0].set_ylabel('$y$')
         # val plot
         plot = ax[1].pcolormesh(mesh_x, mesh_y, val.reshape(mesh_x.shape), shading='gouraud',
                                 cmap='jet', vmin=np.min(val), vmax=np.max(val))
         fig.colorbar(plot,  ax=ax[1], format="%1.1e")
-        ax[1].set_title(f'DNN solution')
+        ax[1].set_title(f'$u_\\theta$')
+        ax[1].set_xlabel('$x$')
+        ax[1].set_ylabel('$y$')
         # exact plot
         plot = ax[2].pcolormesh(mesh_x, mesh_y, exact.reshape(mesh_x.shape), shading='gouraud',
                                 cmap='jet', vmin=0, vmax=1)
         fig.colorbar(plot, ax=ax[2], format="%1.1e")
-        ax[2].set_title(f'exact solution')
+        ax[2].set_title(f'$u^*$')
+        ax[2].set_xlabel('$x$')
+        ax[2].set_ylabel('$y$')
         plt.savefig(path + f'/{num}_sol.png', dpi=300)
         plt.close()
 
 
 class Poisson2D9Peak:
     def __init__(self, dev, dtp, weight, xlim, ylim, num_in, num_bd, input_size, output_size):
-        self.dim, self.dev, self.dtp, self.weight, self.xlim, self.ylim, self.input_size, self.output_size \
-            = 2, dev, dtp, weight, xlim, ylim, input_size, output_size
+        self.dim, self.dev, self.dtp, self.weight, self.xlim, self.ylim, self.input_size, self.output_size = 2, dev, dtp, weight, xlim, ylim, input_size, output_size
         self.criterion = torch.nn.MSELoss()
         self.physics = ['in', 'bd']
         self.size = {'in': num_in, 'bd': num_bd}
@@ -244,10 +214,8 @@ class Poisson2D9Peak:
         self.center = np.stack([x.flatten(), y.flatten()], axis=1)
 
     def sample(self, size, mode):
-        xs, xe = self.xlim[0], self.xlim[1]
-        x_len = xe - xs
-        ys, ye = self.ylim[0], self.ylim[1]
-        y_len = ye - ys
+        xs, xe, ys, ye = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1]
+        x_len, y_len = xe - xs, ye-ys
         if mode == 'in':
             node_in = torch.cat(
                 (torch.rand([size, 1]) * x_len + torch.ones(size=[size, 1]) * xs,
@@ -278,11 +246,6 @@ class Poisson2D9Peak:
             return torch.cat(node_bd, dim=0).to(device=self.dev, dtype=self.dtp)
 
     def solve(self, mode, node):
-        """
-        node is a dict{"in": node_in, "bd":node_bd}
-        mode is a string that can be "rhs", "bd" or "exact"
-        return a dict{"in": val_in, "bd": val_bd} or a tensor depending on the mode
-        """
         if mode == 'in':
             val_in = torch.zeros_like(node[:, 0])
             for i in range(self.center.shape[0]):
@@ -306,12 +269,6 @@ class Poisson2D9Peak:
             raise ValueError('Invalid mode')
 
     def residual(self, node, net, cls, mode):
-        """
-        compute the pde residual in the domain,
-        cls: "loss" compute the MSELoss from pde
-              "ele" elementwise residual
-        mode is a string that can be "in", "bd" computing value in the domain or on the boundary
-        """
         pred = self.solve(mode=mode, node=node)
         if mode == 'in':
             x = node
@@ -346,10 +303,7 @@ class Poisson2D9Peak:
             raise ValueError('Invalid mode')
 
     def grid(self, size):
-        xs = self.xlim[0]
-        xe = self.xlim[1]
-        ys = self.ylim[0]
-        ye = self.ylim[1]
+        xs, xe, ys, ye = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1]
         inter_x = np.linspace(start=xs, stop=xe, num=size + 2)
         inter_y = np.linspace(start=ys, stop=ye, num=size + 2)
         mesh_x, mesh_y = np.meshgrid(inter_x, inter_y)
@@ -360,7 +314,7 @@ class Poisson2D9Peak:
                 & (self.ylim[0] < node[:, 1]) & (node[:, 1] < self.ylim[1]))
 
     def test_err(self, net):
-        mesh_x, mesh_y = self.grid(size=100)
+        mesh_x, mesh_y = self.grid(size=256)
         node = np.stack((mesh_x.flatten(), mesh_y.flatten()), axis=1)
         node_aux = torch.from_numpy(node).to(device=self.dev)
         val = net(node_aux).detach().cpu().numpy().flatten()
@@ -370,94 +324,73 @@ class Poisson2D9Peak:
         err = np.sqrt(np.sum(np.power(val - exact, 2)) / np.sum(np.power(exact, 2)))
         return err
 
-    def scat_node_dict(self, node_domain, node_add, fname):
-        node_all = torch.cat([node_domain['in'].detach(),
-                              node_domain['bd'].detach()])
-        node_all = node_all.cpu().numpy()
-        node_add = node_add.detach().cpu().numpy()
-        xs, xe = self.xlim[0], self.xlim[1]
-        ys, ye = self.ylim[0], self.ylim[1]
-        fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
-        ax.set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.05)
-        ax.set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.05)
-        ax.scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                   s=np.ones_like(node_all[:, 0]), alpha=0.5, label='Uni')
-        ax.scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                   s=np.ones_like(node_add[:, 0]), alpha=1.0, label='IS')
-        ax.legend(loc='upper right')
-        plt.savefig(fname, dpi=300)
-        plt.close()
-
-    def target_plot(self, target, path):
-        mesh_x, mesh_y = self.grid(size=100)
-        node = np.stack((mesh_x.flatten(), mesh_y.flatten()), axis=1)
-        val = target(node).reshape(mesh_x.shape)
-        fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
-        plot = ax.pcolormesh(mesh_x, mesh_y, val, shading='gouraud', cmap='jet', vmin=0, vmax=np.max(val))
-        fig.colorbar(plot, ax=ax, format="%1.1e")
-        plt.savefig(path + '.png', dpi=300)
-        plt.close()
-
     def target_node_plot_together(self, node_domain, node_add, loss, proposal, IS_sign, path, num):
         node_all = torch.cat([node_domain['in'].detach(),
                               node_domain['bd'].detach()])
         node_all = node_all.cpu().numpy()
         node_add = node_add.detach().cpu().numpy()
-        xs, xe = self.xlim[0], self.xlim[1]
-        ys, ye = self.ylim[0], self.ylim[1]
-        mesh_x, mesh_y = self.grid(size=100)
+        xs, xe, ys, ye = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1]
+        mesh_x, mesh_y = self.grid(size=256)
         node = np.stack((mesh_x.flatten(), mesh_y.flatten()), axis=1)
         val = loss(node).reshape(mesh_x.shape)
-        if IS_sign == 0:
+        if (IS_sign == 0) | (proposal is None):
             fig, ax = plt.subplots(1, 2, layout='constrained', figsize=(12.8, 4.8))
             # plot loss
             plot = ax[0].pcolormesh(mesh_x, mesh_y, val, shading='gouraud', cmap='jet', vmin=0, vmax=np.max(val))
             fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title('loss')
+            ax[0].set_title(f'Residual $\\mathcal{{Q}}_{num}$')
+            ax[0].set_xlabel('$x$')
+            ax[0].set_ylabel('$y$')
             # plot node
             ax[1].set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
             ax[1].set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.15)
             ax[1].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.2, label='Uni')
+                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\\\mathcal{{S}}_{num}$')
             ax[1].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label='IS')
-            ax[1].legend(loc='upper right')
-            ax[1].set_title('nodes')
+                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=r'$\mathcal{D}')
+            ax[1].legend(loc='upper right', fontsize=12)
+            ax[1].set_title(f'nodes')
+            ax[1].set_xlabel('$x$')
+            ax[1].set_ylabel('$y$')
             plt.savefig(path + f'/{num}_loss.png', dpi=300)
             plt.close()
-        if IS_sign == 1:
+        if proposal:
             val_prop = proposal(node).reshape(mesh_x.shape)
             fig, ax = plt.subplots(1, 3, layout='constrained', figsize=(19.2, 4.8))
             # plot loss
             plot = ax[0].pcolormesh(mesh_x, mesh_y, val, shading='gouraud',
                                     cmap='jet', vmin=0, vmax=np.max(val))
             fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title('loss')
+            ax[0].set_title(f'Residual $\\mathcal{{Q}}_{num}$')
+            ax[0].set_xlabel('$x$')
+            ax[0].set_ylabel('$y$')
             # plot proposal
             plot = ax[1].pcolormesh(mesh_x, mesh_y, val_prop, shading='gouraud',
                                     cmap='jet', vmin=0, vmax=np.max(val_prop))
             fig.colorbar(plot, ax=ax[1], format="%1.1e")
             ax[1].set_title('proposal')
+            ax[1].set_xlabel('$x$')
+            ax[1].set_ylabel('$y$')
             # plot node
             ax[2].set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
             ax[2].set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.15)
             ax[2].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label='Uni')
+                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\\\mathcal{{S}}_{num}$')
             ax[2].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label='IS')
-            ax[2].legend(loc='upper right')
+                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=r'$\mathcal{D}')
+            ax[2].legend(loc='upper right', fontsize=12)
             ax[2].set_title('nodes')
+            ax[2].set_xlabel('$x$')
+            ax[2].set_ylabel('$y$')
             plt.savefig(path + f'/{num}_loss.png', dpi=300)
             plt.close()
 
     def test_err_plot(self, net, path, num):
-        mesh_x, mesh_y = self.grid(size=100)
+        mesh_x, mesh_y = self.grid(size=256)
         node = np.stack((mesh_x.flatten(), mesh_y.flatten()), axis=1)
         node_aux = torch.from_numpy(node).to(device=self.dev)
         val = net(node_aux).detach().cpu().numpy().flatten()
-        exact = np.zeros_like(node[:, 0])
-        for i in range(self.center.shape[0]):
-            exact += np.exp(-1000 * ((node[:, 0] - self.center[i, 0]) ** 2 + (node[:, 1] - self.center[i, 1]) ** 2))
+        exact = np.exp(-1000 * ((node[:, 0] - 0.5) ** 2 + (node[:, 1] - 0.5) ** 2))
         err = np.sqrt(np.sum(np.power(val - exact, 2)) / np.sum(np.power(exact, 2)))
         err_plt = np.abs(val - exact)
         fig, ax = plt.subplots(1, 3, layout='constrained', figsize=(19.2, 4.8))
@@ -465,17 +398,23 @@ class Poisson2D9Peak:
         plot = ax[0].pcolormesh(mesh_x, mesh_y, err_plt.reshape(mesh_x.shape), shading='gouraud',
                                 cmap='jet', vmin=0, vmax=np.max(err_plt))
         fig.colorbar(plot, ax=ax[0], format="%1.1e")
-        ax[0].set_title(f'relative error {round(err, 6)}')
+        ax[0].set_title(f'$e_r(u)$={round(err, 4)}')
+        ax[0].set_xlabel('$x$')
+        ax[0].set_ylabel('$y$')
         # val plot
         plot = ax[1].pcolormesh(mesh_x, mesh_y, val.reshape(mesh_x.shape), shading='gouraud',
                                 cmap='jet', vmin=np.min(val), vmax=np.max(val))
-        fig.colorbar(plot,  ax=ax[1], format="%1.1e")
-        ax[1].set_title(f'DNN solution')
+        fig.colorbar(plot, ax=ax[1], format="%1.1e")
+        ax[1].set_title(f'$u_\\theta$')
+        ax[1].set_xlabel('$x$')
+        ax[1].set_ylabel('$y$')
         # exact plot
         plot = ax[2].pcolormesh(mesh_x, mesh_y, exact.reshape(mesh_x.shape), shading='gouraud',
                                 cmap='jet', vmin=0, vmax=1)
         fig.colorbar(plot, ax=ax[2], format="%1.1e")
-        ax[2].set_title(f'exact solution')
+        ax[2].set_title(f'$u^*$')
+        ax[2].set_xlabel('$x$')
+        ax[2].set_ylabel('$y$')
         plt.savefig(path + f'/{num}_sol.png', dpi=300)
         plt.close()
 
@@ -499,8 +438,7 @@ class Poisson2DLshape:
 
     def sample(self, size, mode):
         xs, xe, ys, ye = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1]
-        x_len = xe - xs
-        y_len = ye - ys
+        x_len, y_len = xe - xs, ye - ys
         if mode == 'in':
             node_in = torch.empty((0, self.dim))
             res = size
@@ -537,12 +475,8 @@ class Poisson2DLshape:
                     node_bd[i][node_bd[i][:, 1] > self.y2lim[0], 0] = self.x2lim[0]
             return torch.cat(node_bd, dim=0).to(device=self.dev, dtype=self.dtp)
 
-    def solve(self, mode, node):
-        """
-        node is a dict{"in": node_in, "bd":node_bd}
-        mode is a string that can be "rhs", "bd" or "exact"
-        return a dict{"in": val_in, "bd": val_bd} or a tensor depending on the mode
-        """
+    @staticmethod
+    def solve(mode, node):
         if mode == 'in':
             val_in = torch.ones_like(node[:, 0])
             return val_in
@@ -553,12 +487,6 @@ class Poisson2DLshape:
             raise ValueError('Invalid mode')
 
     def residual(self, node, net, cls, mode):
-        """
-        compute the pde residual in the domain,
-        cls: "loss" compute the MSELoss from pde
-              "ele" elementwise residual
-        mode is a string that can be "in", "bd" computing value in the domain or on the boundary
-        """
         pred = self.solve(mode=mode, node=node)
         if mode == 'in':
             x = node
@@ -593,12 +521,9 @@ class Poisson2DLshape:
             raise ValueError('Invalid mode')
 
     def grid(self, size):
-        xs = self.xlim[0]
-        xe = self.xlim[1]
-        ys = self.ylim[0]
-        ye = self.ylim[1]
-        inter_x = np.linspace(start=xs, stop=xe, num=size + 2)
-        inter_y = np.linspace(start=ys, stop=ye, num=size + 2)
+        xs, xe, ys, ye = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1]
+        inter_x = np.linspace(start=xs, stop=xe, num=size + 1)
+        inter_y = np.linspace(start=ys, stop=ye, num=size + 1)
         mesh_x, mesh_y = np.meshgrid(inter_x, inter_y)
         return mesh_x, mesh_y
 
@@ -618,28 +543,32 @@ class Poisson2DLshape:
                               node_domain['bd'].detach()])
         node_all = node_all.cpu().numpy()
         node_add = node_add.detach().cpu().numpy()
-        xs, xe = self.xlim[0], self.xlim[1]
-        ys, ye = self.ylim[0], self.ylim[1]
+        xs, xe, ys, ye = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1]
         data = np.load('./data/Poisson_Lshape.npz')
         node, exact = data['X_test'], data['y_ref'].flatten()
         ind = np.where(np.isnan(exact))[0]
         val = loss(node)
         val[ind] = np.nan
+        mesh_x, mesh_y = node[:, 0].reshape(161, 161), node[:, 1].reshape(161, 161)
         if IS_sign == 0:
             fig, ax = plt.subplots(1, 2, layout='constrained', figsize=(12.8, 4.8))
             # plot loss
-            plot = ax[0].scatter(node[:, 0], node[:, 1], c=val, cmap='jet')
+            plot = ax[0].pcolormesh(mesh_x, mesh_y, val.reshape(161, 161), shading='gouraud', cmap='jet')
             fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title('loss')
+            ax[0].set_title(f'Residual $\\mathcal{{Q}}_{num}$')
+            ax[0].set_xlabel('$x$')
+            ax[0].set_ylabel('$y$')
             # plot node
             ax[1].set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
             ax[1].set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.15)
             ax[1].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.2, label='Uni')
+                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\\\mathcal{{S}}_{num}$')
             ax[1].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label='IS')
-            ax[1].legend(loc='upper right')
+                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=r'$\mathcal{D}')
+            ax[1].legend(loc='upper right', fontsize=12)
             ax[1].set_title('nodes')
+            ax[1].set_xlabel('$x$')
+            ax[1].set_ylabel('$y$')
             plt.savefig(path + f'/{num}_loss.png', dpi=300)
             plt.close()
         if IS_sign == 1:
@@ -649,21 +578,27 @@ class Poisson2DLshape:
             plot = ax[0].scatter(node[:, 0], node[:, 1], c=val, cmap='jet')
             fig.colorbar(plot, ax=ax[0], format="%1.1e")
             ax[0].set_title('loss')
+            ax[0].set_xlabel('$x$')
+            ax[0].set_ylabel('$y$')
             # plot node
             ax[2].set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
             ax[2].set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.15)
             ax[2].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.2, label='Uni')
+                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\\\mathcal{{S}}_{num}$')
             ax[2].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label='IS')
+                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=r'$\mathcal{D}')
             ax[2].legend(loc='upper right')
             ax[2].set_title('nodes')
+            ax[2].set_xlabel('$x$')
+            ax[2].set_ylabel('$y$')
             # plot proposal
             val_prop = proposal(node)
             val_prop[ind] = np.nan
             plot = ax[1].scatter(node[:, 0], node[:, 1], c=val_prop, cmap='jet')
             fig.colorbar(plot, ax=ax[1], format="%1.1e")
             ax[1].set_title('proposal')
+            ax[1].set_xlabel('$x$')
+            ax[1].set_ylabel('$y$')
             plt.savefig(path + f'/{num}_loss.png', dpi=300)
             plt.close()
 
@@ -673,6 +608,7 @@ class Poisson2DLshape:
         ind = np.where(~np.isnan(exact))[0]
         node_aux = torch.from_numpy(node[ind, :]).to(device=self.dev)
         val = net(node_aux).detach().cpu().numpy().flatten()
+        mesh_x, mesh_y = node[:, 0].reshape(161, 161), node[:, 1].reshape(161, 161)
         err = np.sqrt(np.sum(np.power(val - exact[ind], 2)) / np.sum(np.power(exact[ind], 2)))
         err_plt = np.empty_like(exact)
         err_plt[:] = np.nan
@@ -682,16 +618,22 @@ class Poisson2DLshape:
         val_plt[ind] = val
         fig, ax = plt.subplots(1, 3, layout='constrained', figsize=(19.2, 4.8))
         # err plot
-        plot = ax[0].scatter(node[:, 0], node[:, 1], c=err_plt, cmap='jet')
+        plot = ax[0].pcolormesh(mesh_x, mesh_y, err_plt.reshape(mesh_x.shape), shading='gouraud',cmap='jet')
         fig.colorbar(plot, ax=ax[0], format="%1.1e")
-        ax[0].set_title(f'relative error {round(err, 6)}')
+        ax[0].set_title(f'$e_r(u)$={round(err, 4)}')
+        ax[0].set_xlabel('$x$')
+        ax[0].set_ylabel('$y$')
         # val plot
-        plot = ax[1].scatter(node[:, 0], node[:, 1], c=val_plt, cmap='jet')
+        plot = ax[1].pcolormesh(mesh_x, mesh_y, val_plt.reshape(mesh_x.shape), shading='gouraud',cmap='jet')
         fig.colorbar(plot,  ax=ax[1], format="%1.1e")
-        ax[1].set_title(f'DNN solution')
+        ax[1].set_title(f'$\\u_\\theta')
+        ax[1].set_xlabel('$x$')
+        ax[1].set_ylabel('$y$')
         # exact plot
-        plot = ax[2].scatter(node[:, 0], node[:, 1], c=exact, cmap='jet')
+        plot = ax[2].pcolormesh(mesh_x, mesh_y, exact.reshape(mesh_x.shape), shading='gouraud',cmap='jet')
         fig.colorbar(plot, ax=ax[2], format="%1.1e")
-        ax[2].set_title(f'exact solution')
+        ax[2].set_title(f'$u^*$')
+        ax[2].set_xlabel('$x$')
+        ax[2].set_ylabel('$y$')
         plt.savefig(path + f'/{num}_sol.png', dpi=300)
         plt.close()
