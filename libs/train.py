@@ -158,7 +158,7 @@ class train_add:
         node = node_domain.copy()
         while (loss_test > self.loss_tol) & (count <= self.max_iter):
             if self.IS_sign:
-                log.info('=' * 3 + f'{count}-th ' + f'{self.sample_method.__class__.__name__}' +f' with num {node_search.shape[0]}' + '=' * 10)
+                log.info('=' * 3 + f'{count}-th ' + f'{self.sample_method.__class__.__name__}' +f' with num {node_search[:, 0].shape}' + '=' * 10)
             else:
                 log.info(
                     '=' * 3 + f'{count}-th ' + f'{self.sample_method.__class__.__name__}' + '=' * 10)

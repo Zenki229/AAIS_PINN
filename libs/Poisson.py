@@ -129,9 +129,9 @@ class Poisson2D1Peak:
             ax[1].set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
             ax[1].set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.15)
             ax[1].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\\\mathcal{{S}}_{num}$')
+                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{num}$')
             ax[1].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=r'$\mathcal{D}')
+                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
             ax[1].legend(loc='upper right', fontsize=12)
             ax[1].set_title(f'nodes')
             ax[1].set_xlabel('$x$')
@@ -159,9 +159,9 @@ class Poisson2D1Peak:
             ax[2].set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
             ax[2].set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.15)
             ax[2].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\\\mathcal{{S}}_{num}$')
+                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{num}$')
             ax[2].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=r'$\mathcal{D}')
+                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
             ax[2].legend(loc='upper right', fontsize=12)
             ax[2].set_title('nodes')
             ax[2].set_xlabel('$x$')
@@ -345,9 +345,9 @@ class Poisson2D9Peak:
             ax[1].set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
             ax[1].set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.15)
             ax[1].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\\\mathcal{{S}}_{num}$')
+                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{num}$')
             ax[1].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=r'$\mathcal{D}')
+                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
             ax[1].legend(loc='upper right', fontsize=12)
             ax[1].set_title(f'nodes')
             ax[1].set_xlabel('$x$')
@@ -375,9 +375,9 @@ class Poisson2D9Peak:
             ax[2].set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
             ax[2].set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.15)
             ax[2].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\\\mathcal{{S}}_{num}$')
+                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'mathcal{{S}}_{num}$')
             ax[2].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=r'$\mathcal{D}')
+                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
             ax[2].legend(loc='upper right', fontsize=12)
             ax[2].set_title('nodes')
             ax[2].set_xlabel('$x$')
@@ -562,9 +562,9 @@ class Poisson2DLshape:
             ax[1].set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
             ax[1].set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.15)
             ax[1].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\\\mathcal{{S}}_{num}$')
+                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{num}$')
             ax[1].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=r'$\mathcal{D}')
+                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
             ax[1].legend(loc='upper right', fontsize=12)
             ax[1].set_title('nodes')
             ax[1].set_xlabel('$x$')
@@ -584,9 +584,9 @@ class Poisson2DLshape:
             ax[2].set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
             ax[2].set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.15)
             ax[2].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\\\mathcal{{S}}_{num}$')
+                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{num}$')
             ax[2].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=r'$\mathcal{D}')
+                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
             ax[2].legend(loc='upper right')
             ax[2].set_title('nodes')
             ax[2].set_xlabel('$x$')
@@ -618,19 +618,19 @@ class Poisson2DLshape:
         val_plt[ind] = val
         fig, ax = plt.subplots(1, 3, layout='constrained', figsize=(19.2, 4.8))
         # err plot
-        plot = ax[0].pcolormesh(mesh_x, mesh_y, err_plt.reshape(mesh_x.shape), shading='gouraud',cmap='jet')
+        plot = ax[0].pcolormesh(mesh_x, mesh_y, err_plt.reshape(mesh_x.shape), shading='gouraud', cmap='jet')
         fig.colorbar(plot, ax=ax[0], format="%1.1e")
         ax[0].set_title(f'$e_r(u)$={round(err, 4)}')
         ax[0].set_xlabel('$x$')
         ax[0].set_ylabel('$y$')
         # val plot
-        plot = ax[1].pcolormesh(mesh_x, mesh_y, val_plt.reshape(mesh_x.shape), shading='gouraud',cmap='jet')
+        plot = ax[1].pcolormesh(mesh_x, mesh_y, val_plt.reshape(mesh_x.shape), shading='gouraud', cmap='jet')
         fig.colorbar(plot,  ax=ax[1], format="%1.1e")
         ax[1].set_title(f'$\\u_\\theta')
         ax[1].set_xlabel('$x$')
         ax[1].set_ylabel('$y$')
         # exact plot
-        plot = ax[2].pcolormesh(mesh_x, mesh_y, exact.reshape(mesh_x.shape), shading='gouraud',cmap='jet')
+        plot = ax[2].pcolormesh(mesh_x, mesh_y, exact.reshape(mesh_x.shape), shading='gouraud', cmap='jet')
         fig.colorbar(plot, ax=ax[2], format="%1.1e")
         ax[2].set_title(f'$u^*$')
         ax[2].set_xlabel('$x$')
