@@ -92,7 +92,7 @@ class TrainResample:
                 pickle.dump(rec, f)
             for state in self.pde.physics:
                 node_domain[state] = self.pde.sample(self.pde.size[state], state)
-            node_aux = torch.cat([node_domain['in'], node_loss], dim=0).detach().cpy().numpy()
+            node_aux = torch.cat([node_domain['in'], node_loss], dim=0).detach().cpu().numpy()
             node_choose = np.random.choice(a=len(node_aux), size=self.pde.size['in'], replace=False)
             node_domain['in'] = torch.from_numpy(node_choose).to(device=self.dev)
             self.pde.test_err_plot(self.net, self.file_path + '/test', count)
