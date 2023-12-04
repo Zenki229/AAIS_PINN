@@ -129,7 +129,7 @@ class Poisson2D1Peak:
             ax[1].set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
             ax[1].set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.15)
             ax[1].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{num}$')
+                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{{{num}}}$')
             ax[1].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
                           s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
             ax[1].legend(loc='upper right', fontsize=12)
