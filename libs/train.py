@@ -91,6 +91,8 @@ class TrainResample:
             with open(self.file_path + "/train" + f"/rec_{count}.pkl", "wb") as f:
                 pickle.dump(rec, f)
             for state in self.pde.physics:
+                if state == 'in':
+                    continue
                 node_domain[state] = self.pde.sample(self.pde.size[state], state)
             node_aux = torch.cat([node_domain['in'], node_loss], dim=0)
             ind = np.random.choice(a=len(node_aux), size=self.pde.size['in'], replace=False)
