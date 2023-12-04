@@ -1,15 +1,13 @@
-import torch
 from matplotlib.ticker import MaxNLocator
 try:
     from libs.utils import *
-except Exception:
+except FileNotFoundError:
     from utils import *
 import time
 
 
-class train_resample:
-    def __init__(self, pde, net, dev, optimizer, scheduler, lbfgs, optim_epoch, file_path, logger: logging,
-                  num_add, num_search, max_iter, loss_tol, sample_method, IS_sign
+class TrainResample:
+    def __init__(self, pde, net, dev, optimizer, scheduler, lbfgs, optim_epoch, file_path, logger: logging, num_add, num_search, max_iter, loss_tol, sample_method, IS_sign
                  ):
         self.net = net
         self.pde = pde
@@ -29,15 +27,14 @@ class train_resample:
         self.IS_sign = IS_sign
 
     def forward(self):
-        def target(node):
+        def target(node_cpu):
             # node:cpu
-            node = torch.from_numpy(node).to(device=self.dev)
-            return np.where(self.pde.is_node_in(node).detach().cpu().numpy(),
-                            torch.pow(input=self.pde.residual(node=node, net=self.net, cls="ele", mode="in"),
-                                      exponent=2).detach().cpu().numpy(), 0)
+            node_gpu = torch.from_numpy(node_cpu).to(device=self.dev)
+            return np.where(self.pde.is_node_in(node_gpu).detach().cpu().numpy(),
+                            torch.pow(input=self.pde.residual(node=node_gpu, net=self.net, cls="ele", mode="in"), exponent=2).detach().cpu().numpy(), 0)
         if self.IS_sign:
-            ess = np.zeros((0,1))
-            shape = np.zeros((0,1))
+            ess = np.zeros((0, 1))
+            shape = np.zeros((0, 1))
             np.save(self.file_path+'/train/'+'ess.npy', ess)
             np.save(self.file_path + '/train/' + 'shape.npy', shape)
             node_search = self.pde.sample(self.num_search, 'in').detach().cpu().numpy()
@@ -45,7 +42,6 @@ class train_resample:
         node_domain = {}
         for state in self.pde.physics:
             node_domain[state] = self.pde.sample(self.pde.size[state], state)
-        # self.pde.scat_node_dict(node_domain, fname=self.file_path + '/img/' + f'node_domain.png')
         self.logger.info('=' * 3 + f' First Training with inside node shape {node_domain["in"].shape[0]}' + '=' * 10)
         t1 = time.time()
         rec = run_train(self.net, self.pde, node_domain, self.epoch_init,
@@ -55,15 +51,13 @@ class train_resample:
         self.logger.info('=' * 3 + f'Train Done, time ' + time.strftime("%H:%M:%S", time.gmtime(t_train)) + '=' * 10)
         with open(self.file_path + "/train" + f"/rec_0.pkl", "wb") as f:
             pickle.dump(rec, f)
-
         loss_test = rec['loss'][-1]
         self.pde.test_err_plot(self.net, self.file_path + '/test', 0)
         count = 1
-
         while (loss_test > self.loss_tol) & (count <= self.max_iter):
             node = node_domain.copy()
             if self.IS_sign:
-                log.info('=' * 3 + f'{count}-th '+ f'{self.sample_method.__class__.__name__}' +f' with num {node_search.shape[0]}' + '=' * 10)
+                log.info('=' * 3 + f'{count}-th ' + f'{self.sample_method.__class__.__name__}' + f' with num {node_search.shape[0]}' + '=' * 10)
             else:
                 log.info(
                     '=' * 3 + f'{count}-th ' + f'{self.sample_method.__class__.__name__}' + '=' * 10)
@@ -85,7 +79,7 @@ class train_resample:
                                                num=count)
             t2 = time.time() - t1
             log.info('=' * 3 + 'End sample time' + time.strftime("%H:%M:%S", time.gmtime(t2)) + '=' * 10)
-            node['in'] = torch.unique(torch.cat((node['in'].detach(), node_loss), dim=0), dim=0)
+            node['in'] = torch.cat((node['in'].detach(), node_loss), dim=0)
             self.logger.info('=' * 3 + f'{count}-th Training with node shape {node["in"].shape[0]}' + '=' * 10)
             t1 = time.time()
             rec = run_train(self.net, self.pde, node, self.epoch,
@@ -98,14 +92,16 @@ class train_resample:
                 pickle.dump(rec, f)
             for state in self.pde.physics:
                 node_domain[state] = self.pde.sample(self.pde.size[state], state)
+            node_aux = torch.cat([node_domain['in'], node_loss], dim=0).detach().cpy().numpy()
+            node_choose = np.random.choice(a=len(node_aux), size=self.pde.size['in'], replace=False)
+            node_domain['in'] = torch.from_numpy(node_choose).to(device=self.dev)
             self.pde.test_err_plot(self.net, self.file_path + '/test', count)
             count += 1
             loss_test = rec['loss'][-1]
 
 
-class train_add:
-    def __init__(self, pde, net, dev, optimizer, scheduler, lbfgs, optim_epoch, file_path, logger: logging,
-                  num_add, num_search, max_iter, loss_tol, sample_method, IS_sign
+class TrainAdd:
+    def __init__(self, pde, net, dev, optimizer, scheduler, lbfgs, optim_epoch, file_path, logger: logging, num_add, num_search, max_iter, loss_tol, sample_method, IS_sign
                  ):
         self.net = net
         self.pde = pde
@@ -141,7 +137,6 @@ class train_add:
         node_domain = {}
         for state in self.pde.physics:
             node_domain[state] = self.pde.sample(self.pde.size[state], state)
-        # self.pde.scat_node_dict(node_domain, fname=self.file_path + '/img/' + f'node_domain.png')
         self.logger.info('=' * 3 + f' First Training with inside node shape {node_domain["in"].shape[0]}' + '=' * 10)
         t1 = time.time()
         rec = run_train(self.net, self.pde, node_domain, self.epoch_init,
@@ -199,7 +194,6 @@ class train_add:
             self.pde.test_err_plot(self.net, self.file_path + '/test', count)
             count += 1
             loss_test = rec['loss'][-1]
-
 
 
 def run_train(net, pde, node, epoch, optimizer, scheduler, lbfgs, log):
@@ -267,12 +261,12 @@ def loss_err_plot(path_father):
     err_all = np.concatenate(list(err.values()))
     fig, ax = plt.subplots(layout='constrained')
     ax.semilogy(np.array(loss_all))
-    ax.set_ylim(1e-6,1)
+    ax.set_ylim(np.min(loss_all), 1)
     plt.savefig(path_father+'/img'+'/loss_plot.jpg')
     plt.close()
     fig, ax = plt.subplots(layout='constrained')
     ax.semilogy(np.array(err_all))
-    ax.set_ylim(1e-4, 1)
+    ax.set_ylim(np.min(err_all), 1)
     plt.savefig(path_father + '/img' + '/err_plot.jpg')
     plt.close()
 

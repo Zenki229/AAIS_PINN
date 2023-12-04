@@ -181,7 +181,7 @@ def main():
         'loss_tol': args.loss_tol
     }
     if 'resample' in args.strategy:
-        go_train = train_resample(**params)
+        go_train = TrainResample(**params)
     elif 'add' in args.strategy:
         go_train = train_add(**params)
     else:

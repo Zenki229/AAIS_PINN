@@ -142,14 +142,14 @@ class KdV1D:
             # plot loss
             plot = ax[0].pcolormesh(mesh_t, mesh_x, val, shading='gouraud', cmap='jet', vmin=0, vmax=np.max(val))
             fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title(f'residual $\\mathcal{{Q}}_{num}$')
+            ax[0].set_title(f'residual $\\mathcal{{Q}}_{{{num}}}$')
             ax[0].set_xlabel('$t$')
             ax[0].set_ylabel('$x$')
             # plot node
             ax[1].set_xlim(ts - (te - ts) * 0.05, te + (te - ts) * 0.15)
             ax[1].set_ylim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
             ax[1].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{num}$')
+                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{{{num}}}$')
             ax[1].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
                           s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
             ax[1].legend(loc='upper right')
@@ -165,7 +165,7 @@ class KdV1D:
             plot = ax[0].pcolormesh(mesh_t, mesh_x, val, shading='gouraud',
                                     cmap='jet', vmin=0, vmax=np.max(val))
             fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title(f'residual $\\mathcal{{Q}}_{num}$')
+            ax[0].set_title(f'residual $\\mathcal{{Q}}_{{{num}}}$')
             ax[0].set_xlabel('$t$')
             ax[0].set_ylabel('$x$')
             # plot proposal
@@ -179,7 +179,7 @@ class KdV1D:
             ax[2].set_xlim(ts - (te - ts) * 0.05, te + (te - ts) * 0.15)
             ax[2].set_ylim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
             ax[2].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{num}$')
+                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{{{num}}}$')
             ax[2].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
                           s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
             ax[2].legend(loc='upper right')
@@ -204,12 +204,12 @@ class KdV1D:
         plot = axes[0, 0].pcolormesh(mesh_t, mesh_x, err_plt.reshape(mesh_x.shape), shading='gouraud',
                                      cmap='jet', vmin=0, vmax=np.max(err_plt))
         fig.colorbar(plot, ax=axes[0, 0], format="%1.1e")
-        axes[0, 0].set_title(f'$e_r(u^\\theta_{num})={round(err, 4)}$')
+        axes[0, 0].set_title(f'$e_r(u^\\theta_{{{num}}})={round(err, 4)}$')
         # plot predict
         plot = axes[0, 1].pcolormesh(mesh_t, mesh_x, val.reshape(mesh_x.shape), shading='gouraud',
                                      cmap='jet', vmin=-1.05, vmax=1.05)
         fig.colorbar(plot, ax=axes[0, 1], format="%1.1e")
-        axes[0, 1].set_title(f'$u^\\theta_{num}$')
+        axes[0, 1].set_title(f'$u^\\theta_{{{num}}}$')
         # plot exact
         plot = axes[0, 2].pcolormesh(mesh_t, mesh_x, exact, shading='gouraud',
                                      cmap='jet', vmin=-1.05, vmax=1.05)
@@ -224,9 +224,9 @@ class KdV1D:
             node = torch.from_numpy(node).to(device=self.dev, dtype=self.dtp)
             val_t = net(node).detach().cpu().numpy().flatten()
             axes[1, count].plot(x, sol_t.flatten(), 'b--', label=f'$u^*({t_now}, x)$')
-            axes[1, count].plot(x, val_t, 'r', label=f'$u^\\theta_{num}({t_now}, x)$')
+            axes[1, count].plot(x, val_t, 'r', label=f'$u^\\theta_{{{num}}}({t_now}, x)$')
             err_t = np.sqrt(np.sum(np.power(val_t-sol_t, 2))/np.sum(np.power(sol_t, 2)))
-            axes[1, count].set_title(f'$e_t(u^\\theta_{num}, {t_now})={round(err_t, 4)}$')
+            axes[1, count].set_title(f'$e_t(u^\\theta_{{{num}}}, {t_now})={round(err_t, 4)}$')
             axes[1, count].legend(loc='upper right')
         plt.savefig(path + f'/{num}_sol.png')
         plt.close()
