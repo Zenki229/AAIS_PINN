@@ -122,7 +122,7 @@ class Poisson2D1Peak:
             # plot loss
             plot = ax[0].pcolormesh(mesh_x, mesh_y, val, shading='gouraud', cmap='jet', vmin=0, vmax=np.max(val))
             fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title(f'residual $\\mathcal{{Q}}_{num}$')
+            ax[0].set_title(f'residual $\\mathcal{{Q}}_{{{num}}}$')
             ax[0].set_xlabel('$x$')
             ax[0].set_ylabel('$y$')
             # plot node
