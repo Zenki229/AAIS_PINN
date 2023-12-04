@@ -19,6 +19,14 @@ NSwake:
   output_size: 3
   weight: {'in': 1, 'bd': 1, 'init': 1}
 
+LdC2D:
+  xlim: [0, 1]
+  ylim: [0, 1]
+  Renold: 3200
+  input_size: 2
+  output_size: 3
+  weight: {'in': 1, 'bd': 1}
+
 AllenCahn2D:
   xlim: [-1, 1]
   tlim: [0, 1]

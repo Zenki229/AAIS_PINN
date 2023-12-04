@@ -737,3 +737,282 @@ class NSWake:
             margin=dict(l=20, r=20, b=50, t=20))
         fig.update_traces(colorbar=dict(tickformat='.1e'))
         fig.write_image(fname)
+
+
+class LdC2D:
+    def __init__(self, dev, dtp, weight, Renold,
+                 xlim, ylim, num_in, num_bd, input_size, output_size):
+        self.dim, self.dev, self.dtp, self.weight, self.xlim, self.ylim, self.input_size, self.output_size \
+            = 3, dev, dtp, weight, xlim, ylim, input_size, output_size
+        self.Renold = Renold
+        self.criterion = torch.nn.MSELoss()
+        self.physics = ['in', 'bd']
+        self.size = {'in': num_in, 'bd': num_bd}
+
+    def is_node_in(self, node):
+        return ((self.xlim[0] < node[:, 0]) & (node[:, 0] < self.xlim[1])
+                & (self.ylim[0] < node[:, 1]) & (node[:, 1] < self.ylim[1]))
+
+    def sample(self, size, mode):
+        xs, xe, ys, ye = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1]
+        x_len, y_len = xe - xs, ye - ys
+        if mode == 'in':
+            node_in = torch.cat(
+                (torch.rand([size, 1]) * x_len + torch.ones(size=[size, 1]) * xs,
+                 torch.rand([size, 1]) * y_len + torch.ones(size=[size, 1]) * ys), dim=1)
+            return node_in.to(device=self.dev, dtype=self.dtp)
+        if mode == 'bd':
+            bd_num = torch.randint(low=0, high=4, size=(size,))
+            node_bd = list(range(4))
+            for i in range(4):
+                ind = bd_num[bd_num == i]
+                num = bd_num[ind].shape[0]
+                if i == 0:
+                    node_bd[i] = torch.cat([
+                        torch.rand([num, 1]) * x_len + torch.ones([num, 1]) * xs,
+                        torch.ones([num, 1]) * ys], dim=1)
+                elif i == 1:
+                    node_bd[i] = torch.cat([
+                        torch.ones([num, 1]) * xs,
+                        torch.rand([num, 1]) * y_len + torch.ones([num, 1]) * ys], dim=1)
+                elif i == 2:
+                    node_bd[i] = torch.cat([
+                        torch.rand([num, 1]) * x_len + torch.ones([num, 1]) * xs,
+                        torch.ones([num, 1]) * ye], dim=1)
+                else:
+                    node_bd[i] = torch.cat([
+                        torch.ones([num, 1]) * xe,
+                        torch.rand([num, 1]) * y_len + torch.ones([num, 1]) * ys], dim=1)
+            return torch.cat(node_bd, dim=0).to(device=self.dev, dtype=self.dtp)
+
+    def solve(self, mode, node):
+        if mode == "in":
+            node_in = node
+            val_in = torch.zeros_like(node_in[:, 0])
+            return torch.stack([val_in] * 3, dim=1)
+        elif mode == 'bd':
+            ind = node[:, 1] == self.ylim[1]
+            val_bd_v = torch.zeros_like(node[:, 0])
+            val_bd_u = torch.clone(val_bd_v)
+            val_bd_u[ind] = 1.0
+            return torch.stack([val_bd_u, val_bd_v], dim=1)
+        else:
+            raise ValueError("invalid mode")
+
+    def residual(self, node, net, cls, mode):
+        pred = self.solve(mode=mode, node=node)
+        if mode == 'in':
+            x = node
+            x.requires_grad = True
+            val = net(x)
+            u = val[:, 0]
+            v = val[:, 1]
+            p = val[:, 2]
+            ud = torch.autograd.grad(outputs=u,
+                                     inputs=x,
+                                     grad_outputs=torch.ones_like(u),
+                                     retain_graph=True,
+                                     create_graph=True)[0]
+            udx = ud[:, 0].reshape(-1, 1)
+            udy = ud[:, 1].reshape(-1, 1)
+            udxx = torch.autograd.grad(inputs=x,
+                                       outputs=udx,
+                                       grad_outputs=torch.ones_like(udx),
+                                       retain_graph=True,
+                                       create_graph=True)[0][:, 0].flatten()
+            udyy = torch.autograd.grad(inputs=x,
+                                       outputs=udy,
+                                       grad_outputs=torch.ones_like(udy),
+                                       retain_graph=True,
+                                       create_graph=True)[0][:, 1].flatten()
+            vd = torch.autograd.grad(outputs=v,
+                                     inputs=x,
+                                     grad_outputs=torch.ones_like(v),
+                                     retain_graph=True,
+                                     create_graph=True)[0]
+            vdx = vd[:, 0].reshape(-1, 1)
+            vdy = vd[:, 1].reshape(-1, 1)
+            vdxx = torch.autograd.grad(inputs=x,
+                                       outputs=vdx,
+                                       grad_outputs=torch.ones_like(vdx),
+                                       retain_graph=True,
+                                       create_graph=True)[0][:, 0].flatten()
+            vdyy = torch.autograd.grad(inputs=x,
+                                       outputs=vdy,
+                                       grad_outputs=torch.ones_like(vdy),
+                                       retain_graph=True,
+                                       create_graph=True)[0][:, 1].flatten()
+            dp = torch.autograd.grad(outputs=p,
+                                     inputs=x,
+                                     grad_outputs=torch.ones_like(p),
+                                     retain_graph=True,
+                                     create_graph=True)[0]
+            pdx = dp[:, 0].reshape(-1, 1)
+            pdy = dp[:, 1].reshape(-1, 1)
+            if cls == "loss":
+                pde_res = (self.criterion(u.flatten() * udx.flatten() + v.flatten() * udy.flatten()
+                                          - 1/self.Renold * (udxx + udyy) + pdx.flatten(), pred[:, 0])
+                           + self.criterion(u.flatten() * vdx.flatten() + v.flatten() * vdy.flatten()
+                                            - 1/self.Renold * (vdxx + vdyy) + pdy.flatten(), pred[:, 1])
+                           + self.criterion(udx.flatten() + vdy.flatten(), pred[:, 2]))
+            elif cls == "ele":
+                pde_res = (u.flatten() * udx.flatten() + v.flatten() * udy.flatten()
+                           - 1/self.Renold * (udxx + udyy) + pdx.flatten() - pred[:, 0]
+                           + u.flatten() * vdx.flatten() + v.flatten() * vdy.flatten()
+                           - 1/self.Renold * (vdxx + vdyy) + pdy.flatten() - pred[:, 1]
+                           + udx.flatten() + vdy.flatten() - pred[:, 2])
+            else:
+                raise ValueError("Invalid mode")
+            return pde_res
+        elif mode == "bd":
+            node_bd = node
+            bd_res = self.criterion(net(node_bd)[:, 0], pred[:, 0]) + self.criterion(net(node_bd)[:, 1], pred[:, 1])
+            return bd_res
+        else:
+            raise ValueError('Invalid mode')
+
+    def grid(self, size):
+        xs, xe, ys, ye = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1]
+        inter_x = np.linspace(start=xs, stop=xe, num=size + 1)
+        inter_y = np.linspace(start=ys, stop=ye, num=size + 1)
+        mesh_x, mesh_y = np.meshgrid(inter_x, inter_y)
+        return mesh_x, mesh_y
+
+    def test_err(self, net):
+        data_dict = loadmat("./data/ldc_Re3200.mat")
+        grid_x, grid_y, u, v = data_dict['x'].flatten(), data_dict['y'].flatten(), data_dict['u'].T, data_dict['v'].T
+        mesh_x, mesh_y = np.meshgrid(grid_x, grid_y)
+        node = np.stack([mesh_x.flatten(), mesh_y.flatten()], axis=1)
+        node = torch.from_numpy(node).to(device=self.dev)
+        val = net(node)[:, :2].detach().cpu().numpy()
+        sol = np.stack([u.flatten(), v.flatten()], axis=1)
+        err = np.sqrt(np.sum(np.power(val - sol, 2), axis=0) / np.sum(np.power(sol, 2), axis=0))
+        return np.mean(err.flatten())
+
+    def target_node_plot_together(self, loss, node_add, node_domain, IS_sign, proposal, path, num):
+        node_all = torch.cat([node_domain['in'].detach(),
+                              node_domain['bd'].detach()])
+        node_all = node_all.cpu().numpy()
+        node_add = node_add.detach().cpu().numpy()
+        xs, xe, ys, ye = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1]
+        mesh_x, mesh_y = self.grid(size=256)
+        node = np.stack((mesh_x.flatten(), mesh_y.flatten()), axis=1)
+        val = loss(node).reshape(mesh_x.shape)
+        if (IS_sign == 0) | (proposal is None):
+            fig, ax = plt.subplots(1, 2, layout='constrained', figsize=(12.8, 4.8))
+            # plot loss
+            plot = ax[0].pcolormesh(mesh_x, mesh_y, val, shading='gouraud', cmap='jet', vmin=0, vmax=np.max(val))
+            fig.colorbar(plot, ax=ax[0], format="%1.1e")
+            ax[0].set_title(f'residual $\\mathcal{{Q}}_{{{num}}}$')
+            ax[0].set_xlabel('$x$')
+            ax[0].set_ylabel('$y$')
+            # plot node
+            ax[1].set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
+            ax[1].set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.15)
+            ax[1].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
+                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{{{num}}}$')
+            ax[1].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
+                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
+            ax[1].legend(loc='upper right', fontsize=12)
+            ax[1].set_title(f'nodes')
+            ax[1].set_xlabel('$x$')
+            ax[1].set_ylabel('$y$')
+            plt.savefig(path + f'/{num}_loss.png', dpi=300)
+            plt.close()
+        if proposal:
+            val_prop = proposal(node).reshape(mesh_x.shape)
+            fig, ax = plt.subplots(1, 3, layout='constrained', figsize=(19.2, 4.8))
+            # plot loss
+            plot = ax[0].pcolormesh(mesh_x, mesh_y, val, shading='gouraud',
+                                    cmap='jet', vmin=0, vmax=np.max(val))
+            fig.colorbar(plot, ax=ax[0], format="%1.1e")
+            ax[0].set_title(f'residual $\\mathcal{{Q}}_{{{num}}}$')
+            ax[0].set_xlabel('$x$')
+            ax[0].set_ylabel('$y$')
+            # plot proposal
+            plot = ax[1].pcolormesh(mesh_x, mesh_y, val_prop, shading='gouraud',
+                                    cmap='jet', vmin=0, vmax=np.max(val_prop))
+            fig.colorbar(plot, ax=ax[1], format="%1.1e")
+            ax[1].set_title('proposal')
+            ax[1].set_xlabel('$x$')
+            ax[1].set_ylabel('$y$')
+            # plot node
+            ax[2].set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
+            ax[2].set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.15)
+            ax[2].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
+                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{{{num}}}$')
+            ax[2].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
+                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
+            ax[2].legend(loc='upper right', fontsize=12)
+            ax[2].set_title('nodes')
+            ax[2].set_xlabel('$x$')
+            ax[2].set_ylabel('$y$')
+            plt.savefig(path + f'/{num}_loss.png', dpi=300)
+            plt.close()
+
+    def test_err_plot(self, net, path, num):
+        data_dict = loadmat("./data/ldc_Re3200.mat")
+        grid_x, grid_y, u, v = data_dict['x'].flatten(), data_dict['y'].flatten(), data_dict['u'].T, data_dict['v'].T
+        mesh_x, mesh_y = np.meshgrid(grid_x, grid_y)
+        node = np.stack([mesh_x.flatten(), mesh_y.flatten()], axis=1)
+        node = torch.from_numpy(node).to(device=self.dev)
+        val = net(node)[:, :2].detach().cpu().numpy()
+        sol = np.stack([u.flatten(), v.flatten()], axis=1)
+        err = np.sqrt(np.sum(np.power(val - sol, 2), axis=0) / np.sum(np.power(sol, 2), axis=0))
+        velo = sol[:, 0]**2 + sol[:, 1]**2
+        val_velo = val[:, 0]**2+val[:, 1]**2
+        err_velo = np.sqrt(np.sum(np.power(val_velo - velo, 2), axis=0) / np.sum(np.power(velo, 2), axis=0))
+        fig, axes = plt.subplots(nrows=3, ncols=3, layout='constrained', figsize=(12.8, 9.6))
+        # plot u
+        plot = axes[0, 0].pcolormesh(mesh_x, mesh_y, val[:, 0].reshape(mesh_x.shape), shading='gouraud', cmap='jet')
+        fig.colorbar(plot, ax=axes[0, 0], format="%1.1e")
+        axes[0, 0].set_xlabel('x')
+        axes[0, 0].set_ylabel('y')
+        axes[0, 0].set_title(f'$u^\\theta_{{{num}}}$')
+        plot = axes[0, 1].pcolormesh(mesh_x, mesh_y, sol[:, 0].reshape(mesh_x.shape), shading='gouraud', cmap='jet')
+        fig.colorbar(plot, ax=axes[0, 1], format="%1.1e")
+        axes[0, 1].set_xlabel('x')
+        axes[0, 1].set_ylabel('y')
+        axes[0, 1].set_title(f'$u^*$')
+        plot = axes[0, 2].pcolormesh(mesh_x, mesh_y, (np.abs(val[:, 0]-sol[:, 0])).reshape(mesh_x.shape), shading='gouraud', cmap='jet')
+        fig.colorbar(plot, ax=axes[0, 2], format="%1.1e")
+        axes[0, 2].set_xlabel('x')
+        axes[0, 2].set_ylabel('y')
+        axes[0, 2].set_title(f'$e_r(u^\\theta_{{{num}}})={round(err[0]), 4}$')
+        # plot v
+        plot = axes[1, 0].pcolormesh(mesh_x, mesh_y, val[:, 1].reshape(mesh_x.shape), shading='gouraud', cmap='jet')
+        fig.colorbar(plot, ax=axes[1, 0], format="%1.1e")
+        axes[1, 0].set_xlabel('x')
+        axes[1, 0].set_ylabel('y')
+        axes[1, 0].set_title(f'$v^\\theta_{{{num}}}$')
+        plot = axes[1, 1].pcolormesh(mesh_x, mesh_y, sol[:, 1].reshape(mesh_x.shape), shading='gouraud', cmap='jet')
+        fig.colorbar(plot, ax=axes[1, 1], format="%1.1e")
+        axes[1, 1].set_xlabel('x')
+        axes[1, 1].set_ylabel('y')
+        axes[1, 1].set_title(f'$v^*$')
+        plot = axes[1, 2].pcolormesh(mesh_x, mesh_y, (np.abs(val[:, 1] - sol[:, 1])).reshape(mesh_x.shape),
+                                     shading='gouraud', cmap='jet')
+        fig.colorbar(plot, ax=axes[1, 2], format="%1.1e")
+        axes[1, 2].set_xlabel('x')
+        axes[1, 2].set_ylabel('y')
+        axes[1, 2].set_title(f'$e_r(v^\\theta_{{{num}}})={round(err[1]), 4}$')
+        # plot velo
+        plot = axes[2, 0].pcolormesh(mesh_x, mesh_y, val_velo.reshape(mesh_x.shape), shading='gouraud', cmap='jet')
+        fig.colorbar(plot, ax=axes[2, 0], format="%1.1e")
+        axes[2, 0].set_xlabel('x')
+        axes[2, 0].set_ylabel('y')
+        axes[2, 0].set_title(f'predicted velocity')
+        plot = axes[2, 1].pcolormesh(mesh_x, mesh_y, velo.reshape(mesh_x.shape), shading='gouraud', cmap='jet')
+        fig.colorbar(plot, ax=axes[2, 1], format="%1.1e")
+        axes[2, 1].set_xlabel('x')
+        axes[2, 1].set_ylabel('y')
+        axes[2, 1].set_title(f'exact velocity')
+        plot = axes[2, 2].pcolormesh(mesh_x, mesh_y, (np.abs(val[:, 0] - sol[:, 0])).reshape(mesh_x.shape),
+                                     shading='gouraud', cmap='jet')
+        fig.colorbar(plot, ax=axes[2, 2], format="%1.1e")
+        axes[2, 2].set_xlabel('x')
+        axes[2, 2].set_ylabel('y')
+        axes[2, 2].set_title(f'velocity $L^2$ relative error is {round(err_velo, 4)}')
+        fig.savefig(path + f'/{num}_sol.png', dpi=300)
+        plt.close(fig)
+
