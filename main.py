@@ -183,7 +183,7 @@ def main():
     if 'resample' in args.strategy:
         go_train = TrainResample(**params)
     elif 'add' in args.strategy:
-        go_train = train_add(**params)
+        go_train = TrainAdd(**params)
     else:
         raise NotImplementedError
     go_train.forward()
