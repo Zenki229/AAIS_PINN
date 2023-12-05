@@ -1,6 +1,5 @@
 from libs import *
 
-get_seed(229)
 dtp = torch.float64
 
 try:
@@ -17,6 +16,8 @@ def main():
     parser.add_argument('--dirname', type=str, default="debug",
                         help='name of current saving folder in ./results, '
                              'default: "pde_name"+"domain_name"+"strategy_name"+debug')
+    parser.add_argument('--seed', type=int, default=229,
+                        help='choose the random seed, default 229')
     # pde setting
     parser.add_argument('--pde', type=str, default='Poisson2D9Peak',
                         help='pde type: default is Poisson2D1Peak. Others please see in libs')
@@ -42,6 +43,7 @@ def main():
     parser.add_argument('--loss_tol', type=int, default=0,
                         help='loss tolerance for model')
     args = parser.parse_args()
+    get_seed(args.seed)
     device = torch.device('cuda:'+args.cuda_dev if torch.cuda.is_available() else 'cpu')
     print(f"\nUsing {device}\n")
     try:
