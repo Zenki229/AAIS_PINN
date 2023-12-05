@@ -18,7 +18,7 @@ def main():
                         help='name of current saving folder in ./results, '
                              'default: "pde_name"+"domain_name"+"strategy_name"+debug')
     # pde setting
-    parser.add_argument('--pde', type=str, default='Poisson2D1Peak',
+    parser.add_argument('--pde', type=str, default='Poisson2D9Peak',
                         help='pde type: default is Poisson2D1Peak. Others please see in libs')
     # net and optimizer
     parser.add_argument('--NeuralShape', nargs='+', type=int, default=[20, 7],
@@ -44,7 +44,11 @@ def main():
     args = parser.parse_args()
     device = torch.device('cuda:'+args.cuda_dev if torch.cuda.is_available() else 'cpu')
     print(f"\nUsing {device}\n")
-    path_father = './results/' + args.pde + '_' + args.strategy + '_' + args.dirname
+    try:
+        os.mkdir('./results/' + f'{args.pde}/')
+    except FileExistsError:
+        pass
+    path_father = './results/' + f'{args.pde}/' + args.pde + '_' + args.strategy + '_' + args.dirname
     try:
         os.mkdir(path_father)
     except FileExistsError:
