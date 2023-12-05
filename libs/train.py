@@ -177,7 +177,7 @@ class TrainAdd:
                                                proposal=proposal,
                                                path=self.file_path + '/img',
                                                num=count)
-            node['in'] = torch.unique(torch.cat((node['in'].detach(), node_add), dim=0), dim=0)
+            node['in'] = torch.cat((node['in'].detach(), node_add), dim=0)
             self.logger.info('=' * 3 + f'{count}-th Training with node shape {node["in"].shape[0]}' + '=' * 10)
             t1 = time.time()
             rec = run_train(self.net, self.pde, node, self.epoch,

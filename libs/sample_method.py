@@ -161,7 +161,7 @@ class AAISt:
         count_add = self.count_dict['add']
         n = node.shape[0]
         num = int(np.ceil(n * 0.1))
-        cov_init = 1/(np.power(10*num, 2))
+        cov_init = 1/(np.power(0.1*num, 2))
         #cov_init = 0.01
         # validity check
         if (len(ess_lad) != len(self.a_lad)) | (len(count_lad) != len(self.a_lad)):
