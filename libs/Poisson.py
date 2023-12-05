@@ -149,7 +149,7 @@ class Poisson2D1Peak:
             ax[0].set_xlabel('$x$')
             ax[0].set_ylabel('$y$')
             # plot proposal
-            plot = ax[1].pcolormesh(mesh_x, mesh_y, val_prop, shading='gouraud',
+            plot = ax[1].pcolormesh(mesh_x, mesh_y, np.log(val_prop), shading='gouraud',
                                     cmap='jet', vmin=0, vmax=np.max(val_prop))
             fig.colorbar(plot, ax=ax[1], format="%1.1e")
             ax[1].set_title('proposal')
