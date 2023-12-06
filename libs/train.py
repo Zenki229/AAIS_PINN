@@ -13,7 +13,7 @@ class TrainResample:
         self.pde = pde
         self.dev = dev
         self.epoch_init = optim_epoch[0]
-        self.epoch = optim_epoch[1]
+        self.epoch = optim_epoch[2]
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.lbfgs_pretrain = lbfgs_pretrain
@@ -110,7 +110,7 @@ class TrainAdd:
         self.pde = pde
         self.dev = dev
         self.epoch_init = optim_epoch[0]
-        self.epoch = optim_epoch[1]
+        self.epoch = optim_epoch[2]
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.lbfgs_pretrain = lbfgs_pretrain
@@ -157,7 +157,7 @@ class TrainAdd:
         node = node_domain.copy()
         while (loss_test > self.loss_tol) & (count <= self.max_iter):
             if self.IS_sign:
-                log.info('=' * 3 + f'{count}-th ' + f'{self.sample_method.__class__.__name__}' +f' with num {node_search[:, 0].shape}' + '=' * 10)
+                log.info('=' * 3 + f'{count}-th ' + f'{self.sample_method.__class__.__name__}' +f' with num {node_search.shape[0]}' + '=' * 10)
             else:
                 log.info(
                     '=' * 3 + f'{count}-th ' + f'{self.sample_method.__class__.__name__}' + '=' * 10)

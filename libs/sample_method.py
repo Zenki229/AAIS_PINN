@@ -60,7 +60,7 @@ class AAISGaussian:
             def f(node):
                 return target(node)
             ess_ts = ess_lad[enum]
-            if enum+1>=len(self.a_lad):
+            if enum+1 >= len(self.a_lad):
                 output = MixGaussian(params=proposal.params.copy(), dim=dim)
                 node_o = output.sampling(n)
                 IS_w_o = output.IS_w(f, node_o)
