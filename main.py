@@ -50,7 +50,7 @@ def main():
         os.mkdir('./results/' + f'{args.pde}/')
     except FileExistsError:
         pass
-    path_father = './results/' + f'{args.pde}/' + args.pde + '_' + args.strategy + '_' + args.dirname
+    path_father = './results/' + f'{args.pde}/' + args.pde + '_' + args.strategy + '_' + f'{args.seed}' + '_' + args.dirname
     try:
         os.mkdir(path_father)
     except FileExistsError:
