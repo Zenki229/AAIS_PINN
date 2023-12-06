@@ -26,8 +26,8 @@ def main():
                         help='the  hidden shape of PINNs, [hiden_size, depth] all must be integer. default is [20,7]')
     parser.add_argument('--lr', nargs='+', type=float, default=[1e-4, 1.0],
                         help='adam learning rate and lbfgs (default: [1e-4, 1.0])')
-    parser.add_argument('--epoch', nargs='+', type=int, default=[10, 10, 10],
-                        help='number of epochs, [pretraining, adam, lebfgs] the pre-training use adam of pretrain_epoch+lbfgs_epoch, if lbfgs_epoch=0, means no lbfgs in training. ')
+    parser.add_argument('--epoch', nargs='+', type=int, default=[10, 10, 10, 10],
+                        help='number of epochs, [adam_pretrain, lbfgs_pretrain, adam, lebfgs] the pre-training use adam of pretrain_epoch+lbfgs_epoch, if lbfgs_epoch=0, means no lbfgs in training. ')
     # adaptive sample setting
     parser.add_argument('--strategy', type=str, default='RAD_resample',
                         help='adaptive strategy: combination=SampleMethod_NodeCombineMethod, SampleMethod has "Uni", "AAIS_g", "AAIS_t", "RAD", NodeCombineMethod has "resample')
@@ -128,7 +128,20 @@ def main():
     net.to(device=device, dtype=dtp)
 
     optimizer = torch.optim.Adam(net.parameters(), lr=args.lr[0])
-    if args.epoch[2] >= 1:
+    if args.epoch[1] >= 1:
+        lbfgs_pretrain = torch.optim.LBFGS(
+            net.parameters(),
+            lr=args.lr[1],
+            max_iter=args.epoch[2],
+            max_eval=args.epoch[2],
+            history_size=50,
+            tolerance_grad=1e-7,
+            tolerance_change=1.0 * np.finfo(float).eps,
+            line_search_fn="strong_wolfe",  # better numerical stability
+        )
+    else:
+        lbfgs_pretrain = None
+    if args.epoch[3] >= 1:
         lbfgs = torch.optim.LBFGS(
             net.parameters(),
             lr=args.lr[1],
@@ -175,6 +188,7 @@ def main():
         'dev': device,
         'optimizer': optimizer,
         'scheduler': None,
+        'lbfgs_pretrain': lbfgs_pretrain,
         'lbfgs': lbfgs,
         'optim_epoch': args.epoch[0:2],
         'file_path': path_father,

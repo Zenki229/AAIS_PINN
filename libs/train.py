@@ -7,7 +7,7 @@ import time
 
 
 class TrainResample:
-    def __init__(self, pde, net, dev, optimizer, scheduler, lbfgs, optim_epoch, file_path, logger: logging, num_add, num_search, max_iter, loss_tol, sample_method, IS_sign
+    def __init__(self, pde, net, dev, optimizer, scheduler, lbfgs_pretrain, lbfgs, optim_epoch, file_path, logger: logging, num_add, num_search, max_iter, loss_tol, sample_method, IS_sign
                  ):
         self.net = net
         self.pde = pde
@@ -16,6 +16,7 @@ class TrainResample:
         self.epoch = optim_epoch[1]
         self.optimizer = optimizer
         self.scheduler = scheduler
+        self.lbfgs_pretrain = lbfgs_pretrain
         self.lbfgs = lbfgs
         self.file_path = file_path
         self.logger = logger
@@ -45,7 +46,7 @@ class TrainResample:
         self.logger.info('=' * 3 + f' First Training with inside node shape {node_domain["in"].shape[0]}' + '=' * 10)
         t1 = time.time()
         rec = run_train(self.net, self.pde, node_domain, self.epoch_init,
-                        self.optimizer, self.scheduler, self.lbfgs,
+                        self.optimizer, self.scheduler, self.lbfgs_pretrain,
                         self.logger)
         t_train = time.time() - t1
         self.logger.info('=' * 3 + f'Train Done, time ' + time.strftime("%H:%M:%S", time.gmtime(t_train)) + '=' * 10)
@@ -103,7 +104,7 @@ class TrainResample:
 
 
 class TrainAdd:
-    def __init__(self, pde, net, dev, optimizer, scheduler, lbfgs, optim_epoch, file_path, logger: logging, num_add, num_search, max_iter, loss_tol, sample_method, IS_sign
+    def __init__(self, pde, net, dev, optimizer, scheduler, lbfgs_pretrain, lbfgs, optim_epoch, file_path, logger: logging, num_add, num_search, max_iter, loss_tol, sample_method, IS_sign
                  ):
         self.net = net
         self.pde = pde
@@ -112,6 +113,7 @@ class TrainAdd:
         self.epoch = optim_epoch[1]
         self.optimizer = optimizer
         self.scheduler = scheduler
+        self.lbfgs_pretrain = lbfgs_pretrain
         self.lbfgs = lbfgs
         self.file_path = file_path
         self.logger = logger
@@ -142,7 +144,7 @@ class TrainAdd:
         self.logger.info('=' * 3 + f' First Training with inside node shape {node_domain["in"].shape[0]}' + '=' * 10)
         t1 = time.time()
         rec = run_train(self.net, self.pde, node_domain, self.epoch_init,
-                        self.optimizer, self.scheduler, self.lbfgs,
+                        self.optimizer, self.scheduler, self.lbfgs_pretrain,
                         self.logger)
         t_train = time.time() - t1
         self.logger.info('=' * 3 + f'Train Done, time ' + time.strftime("%H:%M:%S", time.gmtime(t_train)) + '=' * 10)
