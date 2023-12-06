@@ -390,7 +390,9 @@ class Poisson2D9Peak:
         node = np.stack((mesh_x.flatten(), mesh_y.flatten()), axis=1)
         node_aux = torch.from_numpy(node).to(device=self.dev)
         val = net(node_aux).detach().cpu().numpy().flatten()
-        exact = np.exp(-1000 * ((node[:, 0] - 0.5) ** 2 + (node[:, 1] - 0.5) ** 2))
+        exact = np.zeros_like(node[:, 0])
+        for i in range(self.center.shape[0]):
+            exact += np.exp(-1000 * ((node[:, 0] - self.center[i, 0]) ** 2 + (node[:, 1] - self.center[i, 1]) ** 2))
         err = np.sqrt(np.sum(np.power(val - exact, 2)) / np.sum(np.power(exact, 2)))
         err_plt = np.abs(val - exact)
         fig, ax = plt.subplots(1, 3, layout='constrained', figsize=(19.2, 4.8))
