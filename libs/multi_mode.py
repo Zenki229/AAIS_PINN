@@ -85,6 +85,8 @@ class MixGaussian:
             if eig_min < 1e-10:
                 cov = cov + np.diag(np.ones(dim) * (np.abs(eig_min) * 2+1e-10))
             params_next[i, 1 + dim:] = cov.reshape(1, -1)
+        if params.shape[0] == 1:
+          params_next[0, 0] = 1
         return params_next
 
 
