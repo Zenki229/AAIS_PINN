@@ -39,7 +39,7 @@ class TrainResample:
             np.save(self.file_path + '/train/' + 'shape.npy', shape)
             node_search = self.pde.sample(self.num_search, 'in').detach().cpu().numpy()
         log = self.logger
-        loss_save = 100.0
+        loss_save = 100000.0
         node_domain = {}
         for state in self.pde.physics:
             node_domain[state] = self.pde.sample(self.pde.size[state], state)
@@ -135,7 +135,7 @@ class TrainAdd:
             np.save(self.file_path + '/train/' + 'shape.npy', shape)
             node_search = self.pde.sample(self.num_search, 'in').detach().cpu().numpy()
         log = self.logger
-        loss_save = 100.0
+        loss_save = 100000.0
         node_domain = {}
         for state in self.pde.physics:
             node_domain[state] = self.pde.sample(self.pde.size[state], state)

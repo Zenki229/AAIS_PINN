@@ -38,7 +38,7 @@ def main():
     parser.add_argument('--weighted_sample', type=int, default=1,
                         help='weighted_sampling or not for mixture, 0 for False, 1 for True')
     # train set
-    parser.add_argument('--max_iter', type=int, default=2,
+    parser.add_argument('--max_iter', type=int, default=100,
                         help='max iteration for retrain, default is 100')
     parser.add_argument('--loss_tol', type=int, default=0,
                         help='loss tolerance for model')
