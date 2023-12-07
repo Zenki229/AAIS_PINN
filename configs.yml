@@ -111,12 +111,12 @@ Wave3D:
 
 AAIS_g:
   a_ladder: [0.7,0.9,1.0]
-  ess_dict: {'merge': 0.85, 'delete': 0.000000001, 'add': 0.15, 'ladder':[0.90,0.88,0.85]}
+  ess_dict: {'merge': 0.85, 'delete': 0.0001, 'add': 0.15, 'ladder':[0.90,0.88,0.85]}
   count_dict: {'total': 300, 'add': 10, 'ladder': [100,100,100]}
 
 AAIS_t:
   a_ladder: [0.7,0.9,1.0]
-  ess_dict: {'merge': 0.85, 'delete': 0.000000001, 'add': 0.15, 'ladder':[0.90,0.88,0.85]}
+  ess_dict: {'merge': 0.85, 'delete': 0.0001, 'add': 0.15, 'ladder':[0.90,0.88,0.85]}
   count_dict: {'total': 300, 'add': 10, 'ladder': [100,100,100]}
   df: 3
   
