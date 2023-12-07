@@ -236,7 +236,7 @@ def run_train(net, pde, node, epoch, optimizer, scheduler, lbfgs, log):
             table = table.split("\n")[2]
         if iter_count % 100 == 0:
             print(table)
-        if iter_count % 1000 == 0:
+        if iter_count % 200 == 0:
             log.info(table)
         iter_count += 1
         return loss.item()
