@@ -42,8 +42,8 @@ class AAISGaussian:
         count_add = self.count_dict['add']
         n = node.shape[0]
         num = int(np.ceil(n*0.1))
-        cov_init = 1/(np.power(0.1*num, 2))
-        #cov_init = 0.01
+        #cov_init = 1/(np.power(0.1*num, 2))
+        cov_init = 0.01
         # validity check
         if (len(ess_lad) != len(self.a_lad)) | (len(count_lad) != len(self.a_lad)):
             raise ValueError('invalid ladder please check')
@@ -91,7 +91,7 @@ class AAISGaussian:
                         break
                 proposal.update_new(p, node_p, ess_merge, num)
                 # proposal.add_params(p, weight=0.5)
-                for i in range(np.min((int(np.ceil(proposal.params.shape[0] / 10)) + 1, 5))):
+                for i in range(np.min((int(np.ceil(proposal.params.shape[0] / 10)) + 1, 2))):
                     node_q = proposal.sampling(n)
                     IS_w_q = proposal.IS_w(f, node_q)
                     proposal.params = proposal.EM_alg(node_q, IS_w_q, del_ts)
@@ -161,8 +161,8 @@ class AAISt:
         count_add = self.count_dict['add']
         n = node.shape[0]
         num = int(np.ceil(n * 0.1))
-        cov_init = 1/(np.power(0.1*num, 2))
-        #cov_init = 0.01
+        #cov_init = 1/(np.power(0.1*num, 2))
+        cov_init = 0.01
         # validity check
         if (len(ess_lad) != len(self.a_lad)) | (len(count_lad) != len(self.a_lad)):
             raise ValueError('invalid ladder please check')
@@ -211,7 +211,7 @@ class AAISt:
                         break
                 proposal.update_new(p, node_p, ess_merge, num)
                 # proposal.add_params(component=p, weight=0.5)
-                for i in range(np.min((int(np.ceil(proposal.params.shape[0] / 10)) + 1, 5))):
+                for i in range(np.min((int(np.ceil(proposal.params.shape[0] / 10)) + 1, 2))):
                     node_q = proposal.sampling(n)
                     IS_w_q = proposal.IS_w(f, node_q)
                     proposal.params = proposal.EM_alg(node_q, IS_w_q, del_ts)
