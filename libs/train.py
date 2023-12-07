@@ -7,7 +7,7 @@ import time
 
 
 class TrainResample:
-    def __init__(self, pde, net, dev, optimizer, scheduler, lbfgs_pretrain, lbfgs, optim_epoch, file_path, logger: logging, num_add, num_search, max_iter, loss_tol, sample_method, IS_sign
+    def __init__(self, pde, net, dev, optimizer, lbfgs_pretrain, lbfgs, optim_epoch, file_path, logger: logging, num_add, num_search, max_iter, loss_tol, sample_method, IS_sign
                  ):
         self.net = net
         self.pde = pde
@@ -15,7 +15,6 @@ class TrainResample:
         self.epoch_init = optim_epoch[0]
         self.epoch = optim_epoch[2]
         self.optimizer = optimizer
-        self.scheduler = scheduler
         self.lbfgs_pretrain = lbfgs_pretrain
         self.lbfgs = lbfgs
         self.file_path = file_path
@@ -40,22 +39,21 @@ class TrainResample:
             np.save(self.file_path + '/train/' + 'shape.npy', shape)
             node_search = self.pde.sample(self.num_search, 'in').detach().cpu().numpy()
         log = self.logger
+        loss_save = 100.0
         node_domain = {}
         for state in self.pde.physics:
             node_domain[state] = self.pde.sample(self.pde.size[state], state)
         self.logger.info('=' * 3 + f' First Training with inside node shape {node_domain["in"].shape[0]}' + '=' * 10)
         t1 = time.time()
-        rec = run_train(self.net, self.pde, node_domain, self.epoch_init,
-                        self.optimizer, self.scheduler, self.lbfgs_pretrain,
-                        self.logger)
+        rec, loss_save = run_train(self.net, self.pde, node_domain, self.epoch_init,
+                        self.optimizer,  self.lbfgs, self.logger, self.file_path, loss_save)
         t_train = time.time() - t1
         self.logger.info('=' * 3 + f'Train Done, time ' + time.strftime("%H:%M:%S", time.gmtime(t_train)) + '=' * 10)
         with open(self.file_path + "/train" + f"/rec_0.pkl", "wb") as f:
             pickle.dump(rec, f)
-        loss_test = rec['loss'][-1]
         self.pde.test_err_plot(self.net, self.file_path + '/test', 0)
         count = 1
-        while (loss_test > self.loss_tol) & (count <= self.max_iter):
+        while (loss_save > self.loss_tol) & (count <= self.max_iter):
             node = node_domain.copy()
             if self.IS_sign:
                 log.info('=' * 3 + f'{count}-th ' + f'{self.sample_method.__class__.__name__}' + f' with num {node_search.shape[0]}' + '=' * 10)
@@ -83,9 +81,8 @@ class TrainResample:
             node['in'] = torch.cat((node['in'].detach(), node_loss), dim=0)
             self.logger.info('=' * 3 + f'{count}-th Training with node shape {node["in"].shape[0]}' + '=' * 10)
             t1 = time.time()
-            rec = run_train(self.net, self.pde, node, self.epoch,
-                            self.optimizer, self.scheduler, self.lbfgs,
-                            self.logger)
+            rec, loss_save = run_train(self.net, self.pde, node, self.epoch,
+                            self.optimizer, self.lbfgs, self.logger, self.file_path, loss_save)
             t_train = time.time() - t1
             self.logger.info(
                 '=' * 3 + f'Train Done, time ' + time.strftime("%H:%M:%S", time.gmtime(t_train)) + '=' * 10)
@@ -100,11 +97,12 @@ class TrainResample:
             node_domain['in'] = node_aux[ind, :]
             self.pde.test_err_plot(self.net, self.file_path + '/test', count)
             count += 1
-            loss_test = rec['loss'][-1]
-
+        net = torch.load(self.file_path + f"/net/net_bestloss.pkl")
+        self.logger.info('=' * 3 + f'the best loss is {round(loss_save,4)}')
+        self.pde.test_err_plot(net, self.file_path + '/test', 'best')
 
 class TrainAdd:
-    def __init__(self, pde, net, dev, optimizer, scheduler, lbfgs_pretrain, lbfgs, optim_epoch, file_path, logger: logging, num_add, num_search, max_iter, loss_tol, sample_method, IS_sign
+    def __init__(self, pde, net, dev, optimizer, lbfgs_pretrain, lbfgs, optim_epoch, file_path, logger: logging, num_add, num_search, max_iter, loss_tol, sample_method, IS_sign
                  ):
         self.net = net
         self.pde = pde
@@ -112,7 +110,6 @@ class TrainAdd:
         self.epoch_init = optim_epoch[0]
         self.epoch = optim_epoch[2]
         self.optimizer = optimizer
-        self.scheduler = scheduler
         self.lbfgs_pretrain = lbfgs_pretrain
         self.lbfgs = lbfgs
         self.file_path = file_path
@@ -138,24 +135,22 @@ class TrainAdd:
             np.save(self.file_path + '/train/' + 'shape.npy', shape)
             node_search = self.pde.sample(self.num_search, 'in').detach().cpu().numpy()
         log = self.logger
+        loss_save = 100.0
         node_domain = {}
         for state in self.pde.physics:
             node_domain[state] = self.pde.sample(self.pde.size[state], state)
         self.logger.info('=' * 3 + f' First Training with inside node shape {node_domain["in"].shape[0]}' + '=' * 10)
         t1 = time.time()
-        rec = run_train(self.net, self.pde, node_domain, self.epoch_init,
-                        self.optimizer, self.scheduler, self.lbfgs_pretrain,
-                        self.logger)
+        rec, loss_save = run_train(self.net, self.pde, node_domain, self.epoch_init,
+                        self.optimizer, self.lbfgs, self.logger, self.file_path, loss_save)
         t_train = time.time() - t1
         self.logger.info('=' * 3 + f'Train Done, time ' + time.strftime("%H:%M:%S", time.gmtime(t_train)) + '=' * 10)
         with open(self.file_path + "/train" + f"/rec_0.pkl", "wb") as f:
             pickle.dump(rec, f)
-
-        loss_test = rec['loss'][-1]
         self.pde.test_err_plot(self.net, self.file_path + '/test', 0)
         count = 1
         node = node_domain.copy()
-        while (loss_test > self.loss_tol) & (count <= self.max_iter):
+        while (loss_save > self.loss_tol) & (count <= self.max_iter):
             if self.IS_sign:
                 log.info('=' * 3 + f'{count}-th ' + f'{self.sample_method.__class__.__name__}' +f' with num {node_search.shape[0]}' + '=' * 10)
             else:
@@ -182,9 +177,9 @@ class TrainAdd:
             node['in'] = torch.cat((node['in'].detach(), node_add), dim=0)
             self.logger.info('=' * 3 + f'{count}-th Training with node shape {node["in"].shape[0]}' + '=' * 10)
             t1 = time.time()
-            rec = run_train(self.net, self.pde, node, self.epoch,
-                            self.optimizer, self.scheduler, self.lbfgs,
-                            self.logger)
+            rec, loss_save = run_train(self.net, self.pde, node, self.epoch,
+                            self.optimizer, self.lbfgs,
+                            self.logger, self.file_path, loss_save)
             t_train = time.time() - t1
             self.logger.info(
                 '=' * 3 + f'Train Done, time ' + time.strftime("%H:%M:%S", time.gmtime(t_train)) + '=' * 10)
@@ -197,18 +192,22 @@ class TrainAdd:
                     node[state] = self.pde.sample(self.pde.size[state], state)
             self.pde.test_err_plot(self.net, self.file_path + '/test', count)
             count += 1
-            loss_test = rec['loss'][-1]
+        net = torch.load(self.file_path + f"/net/net_bestloss.pkl")
+        self.logger.info('='*3+f'the best loss is {round(loss_save,4)}')
+        self.pde.test_err_plot(net, self.file_path + '/test', 'best')
 
 
-def run_train(net, pde, node, epoch, optimizer, scheduler, lbfgs, log):
+def run_train(net, pde, node, epoch, optimizer, lbfgs, log, file_path, loss_save):
     iter_count = 1
     loss_count = []
     err_count = []
     net.train()
     columns = ["epoch", "name", "lr", "loss", "err"]
+    file_path = file_path
+    loss_save = loss_save
 
     def closure():
-        nonlocal iter_count, loss_count, columns, err_count
+        nonlocal iter_count, loss_count, columns, err_count, file_path, loss_save
         optimizer.zero_grad()
         if lbfgs:
             lbfgs.zero_grad()
@@ -218,6 +217,9 @@ def run_train(net, pde, node, epoch, optimizer, scheduler, lbfgs, log):
             loss_dict['state'] = pde.weight[state] * pde.residual(node[state], net, cls="loss", mode=state)
             loss += loss_dict['state']
         loss_count.append(loss.item())
+        if loss.item() < loss_save:
+            torch.save(net, file_path + f"/net/net_bestloss.pkl")
+            loss_save = loss.item()
         loss.backward()
         if iter_count <= epoch:
             name = optimizer.__class__.__name__
@@ -247,7 +249,7 @@ def run_train(net, pde, node, epoch, optimizer, scheduler, lbfgs, log):
         #     scheduler.step(closure)
     if lbfgs:
         lbfgs.step(closure)
-    return {"count": iter_count, "loss": loss_count, "err": err_count}
+    return {"count": iter_count, "loss": loss_count, "err": err_count}, loss_save
 
 
 def loss_err_plot(path_father):

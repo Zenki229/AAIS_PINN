@@ -19,7 +19,7 @@ def main():
     parser.add_argument('--seed', type=int, default=229,
                         help='choose the random seed, default 229')
     # pde setting
-    parser.add_argument('--pde', type=str, default='Poisson2D9Peak',
+    parser.add_argument('--pde', type=str, default='Poisson2D1Peak',
                         help='pde type: default is Poisson2D1Peak. Others please see in libs')
     # net and optimizer
     parser.add_argument('--NeuralShape', nargs='+', type=int, default=[20, 7],
@@ -29,7 +29,7 @@ def main():
     parser.add_argument('--epoch', nargs='+', type=int, default=[10, 10, 10, 10],
                         help='number of epochs, [adam_pretrain, lbfgs_pretrain, adam, lebfgs] the pre-training use adam of pretrain_epoch+lbfgs_epoch, if lbfgs_epoch=0, means no lbfgs in training. ')
     # adaptive sample setting
-    parser.add_argument('--strategy', type=str, default='RAD_resample',
+    parser.add_argument('--strategy', type=str, default='Uni_add',
                         help='adaptive strategy: combination=SampleMethod_NodeCombineMethod, SampleMethod has "Uni", "AAIS_g", "AAIS_t", "RAD", NodeCombineMethod has "resample')
     parser.add_argument('--num_sample', nargs='+', type=int, default=[100, 100, 200],
                         help='num sampled in the domain, num[0] means the number of points uniformly sampled in the domain during the pretrain, num[1] means the number of points sampled on the boundary(including initial hypersurface), num[2] means the resampled(or added) points in the domain by different sampling methods.')
@@ -38,7 +38,7 @@ def main():
     parser.add_argument('--weighted_sample', type=int, default=1,
                         help='weighted_sampling or not for mixture, 0 for False, 1 for True')
     # train set
-    parser.add_argument('--max_iter', type=int, default=100,
+    parser.add_argument('--max_iter', type=int, default=2,
                         help='max iteration for retrain, default is 100')
     parser.add_argument('--loss_tol', type=int, default=0,
                         help='loss tolerance for model')
@@ -187,7 +187,6 @@ def main():
         'pde': pde,
         'dev': device,
         'optimizer': optimizer,
-        'scheduler': None,
         'lbfgs_pretrain': lbfgs_pretrain,
         'lbfgs': lbfgs,
         'optim_epoch': args.epoch,
