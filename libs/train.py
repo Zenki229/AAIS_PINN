@@ -195,7 +195,7 @@ class TrainAdd:
             count += 1
         net = torch.load(self.file_path + f"/net/net_bestloss.pkl")
         err_save = self.pde.test_err(net)
-        self.logger.info('='*3+f'the best loss is {round(err_save,4)}')
+        self.logger.info('='*3+f'the best loss model out put the relative error  is {round(err_save,4)}')
         self.pde.test_err_plot(net, self.file_path + '/test', 'best')
 
 
@@ -300,6 +300,9 @@ def shape_ess_plot(path_father):
 
 if __name__ == "__main__":
     # path = input("input path_father:")
+    loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_Uni_resample_19076082_500e-pp1")
+    loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_Uni_add_19076082_500e-pp1")
     loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_Uni_resample_19076082_1000e-pp1")
+    loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_Uni_add_19076082_1000e-pp1")
     # shape_ess_plot("../results/Burgers1D_v1Uni_resample_1116-aft-1")
 
