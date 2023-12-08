@@ -267,16 +267,18 @@ def loss_err_plot(path_father):
     # plot loss
     loss_all = np.concatenate(list(loss.values()))
     err_all = np.concatenate(list(err.values()))
-    fig, ax = plt.subplots(layout='constrained')
+    fig, ax = plt.subplots(layout='constrained', figsize=(19.2, 4.8))
     ax.semilogy(np.array(loss_all))
-    ax.set_ylim(np.min(loss_all), 1)
-    plt.savefig(path_father+'/img'+'/loss_plot.jpg')
+    # ax.set_ylim(np.min(loss_all), 1)
+    plt.savefig(path_father+'/img'+'/loss_plot.jpg', dpi=150)
     plt.close()
-    fig, ax = plt.subplots(layout='constrained')
+    fig, ax = plt.subplots(layout='constrained', figsize=(19.2, 4.8))
     ax.semilogy(np.array(err_all))
-    ax.set_ylim(np.min(err_all), 1)
-    plt.savefig(path_father + '/img' + '/err_plot.jpg')
+    # ax.set_ylim(np.min(err_all), 1)
+    plt.savefig(path_father + '/img' + '/err_plot.jpg', dpi=150)
     plt.close()
+    loss_err = np.stack([loss_all, err_all], axis=1)
+    np.save(path_father+'/train'+'/loss_err.npy', loss_err)
 
 
 def shape_ess_plot(path_father):
@@ -298,6 +300,6 @@ def shape_ess_plot(path_father):
 
 if __name__ == "__main__":
     # path = input("input path_father:")
-    loss_err_plot("../results/Burgers1D_v1Uni_resample_1116-aft-1")
+    loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_Uni_resample_19076082_1000e-pp1")
     # shape_ess_plot("../results/Burgers1D_v1Uni_resample_1116-aft-1")
 
