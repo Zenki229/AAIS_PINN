@@ -98,7 +98,8 @@ class TrainResample:
             self.pde.test_err_plot(self.net, self.file_path + '/test', count)
             count += 1
         net = torch.load(self.file_path + f"/net/net_bestloss.pkl")
-        self.logger.info('=' * 3 + f'the best loss is {round(loss_save,4)}')
+        err_save = self.pde.test_err(net)
+        self.logger.info('=' * 3 + f'the best loss is {round(err_save,4)}')
         self.pde.test_err_plot(net, self.file_path + '/test', 'best')
 
 class TrainAdd:
@@ -193,7 +194,8 @@ class TrainAdd:
             self.pde.test_err_plot(self.net, self.file_path + '/test', count)
             count += 1
         net = torch.load(self.file_path + f"/net/net_bestloss.pkl")
-        self.logger.info('='*3+f'the best loss is {round(loss_save,4)}')
+        err_save = self.pde.test_err(net)
+        self.logger.info('='*3+f'the best loss is {round(err_save,4)}')
         self.pde.test_err_plot(net, self.file_path + '/test', 'best')
 
 
