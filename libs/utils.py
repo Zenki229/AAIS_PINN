@@ -321,7 +321,7 @@ def log_gen(path):
     hdlr_f.setLevel(logging.INFO)
     hdlr_s = logging.StreamHandler()
     hdlr_s.setLevel(logging.INFO)
-    fmt_s = logging.Formatter(fmt="%(asctime)s: %(message)s", datefmt="%Y/%m/%d %H:%M:%S")
+    fmt_s = logging.Formatter(fmt="%(message)s")
     fmt_f = logging.Formatter(fmt="%(asctime)s - %(name)s - %(levelname)-9s - %(filename)-8s : %(lineno)s line - %(message)s", datefmt="%Y/%m/%d %H:%M:%S")
     hdlr_s.setFormatter(fmt_s)
     hdlr_f.setFormatter(fmt_f)
