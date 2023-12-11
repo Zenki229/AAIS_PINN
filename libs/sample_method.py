@@ -94,9 +94,9 @@ class AAISGaussian:
                 for i in range(np.min((int(np.ceil(proposal.params.shape[0] / 10)) + 1, 2))):
                     node_q = proposal.sampling(n)
                     IS_w_q = proposal.IS_w(f, node_q)
-                    proposal.params = proposal.EM_alg(node_q, IS_w_q, del_ts)
+                    proposal.params = proposal.EM_alg(node_q, IS_w_q, del_ts=1/proposal.params.shape[0]*0.01)
                     proposal.resort()
-                    proposal.delete(ts=del_ts)
+                    proposal.delete(ts=1/proposal.params.shape[0]*0.01)
                     ess_q = proposal.ess(IS_w_q, n)
                     if ess_q >= ess_ts:
                         break
@@ -214,9 +214,9 @@ class AAISt:
                 for i in range(np.min((int(np.ceil(proposal.params.shape[0] / 10)) + 1, 2))):
                     node_q = proposal.sampling(n)
                     IS_w_q = proposal.IS_w(f, node_q)
-                    proposal.params = proposal.EM_alg(node_q, IS_w_q, del_ts)
+                    proposal.params = proposal.EM_alg(node_q, IS_w_q, del_ts=1/proposal.params.shape[0]*0.01)
                     proposal.resort()
-                    proposal.delete(ts=del_ts)
+                    proposal.delete(ts=1/proposal.params.shape[0]*0.01)
                     ess_q = proposal.ess(IS_w_q, n)
                     if ess_q >= ess_ts:
                         break

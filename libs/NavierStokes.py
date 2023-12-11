@@ -743,7 +743,7 @@ class LdC2D:
     def __init__(self, dev, dtp, weight, Renold,
                  xlim, ylim, num_in, num_bd, input_size, output_size):
         self.dim, self.dev, self.dtp, self.weight, self.xlim, self.ylim, self.input_size, self.output_size \
-            = 3, dev, dtp, weight, xlim, ylim, input_size, output_size
+            = 2, dev, dtp, weight, xlim, ylim, input_size, output_size
         self.Renold = Renold
         self.criterion = torch.nn.MSELoss()
         self.physics = ['in', 'bd']
@@ -978,7 +978,7 @@ class LdC2D:
         fig.colorbar(plot, ax=axes[0, 2], format="%1.1e")
         axes[0, 2].set_xlabel('x')
         axes[0, 2].set_ylabel('y')
-        axes[0, 2].set_title(f'$e_r(u^\\theta_{{{num}}})={round(err[0]), 4}$')
+        axes[0, 2].set_title(f'$e_r(u^\\theta_{{{num}}})={round(err[0],4)}$')
         # plot v
         plot = axes[1, 0].pcolormesh(mesh_x, mesh_y, val[:, 1].reshape(mesh_x.shape), shading='gouraud', cmap='jet')
         fig.colorbar(plot, ax=axes[1, 0], format="%1.1e")
@@ -995,7 +995,7 @@ class LdC2D:
         fig.colorbar(plot, ax=axes[1, 2], format="%1.1e")
         axes[1, 2].set_xlabel('x')
         axes[1, 2].set_ylabel('y')
-        axes[1, 2].set_title(f'$e_r(v^\\theta_{{{num}}})={round(err[1]), 4}$')
+        axes[1, 2].set_title(f'$e_r(v^\\theta_{{{num}}})={round(err[1], 4)}$')
         # plot velo
         plot = axes[2, 0].pcolormesh(mesh_x, mesh_y, val_velo.reshape(mesh_x.shape), shading='gouraud', cmap='jet')
         fig.colorbar(plot, ax=axes[2, 0], format="%1.1e")
