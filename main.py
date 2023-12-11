@@ -16,8 +16,6 @@ def main():
     parser.add_argument('--dirname', type=str, default="debug",
                         help='name of current saving folder in ./results, '
                              'default: "pde_name"+"domain_name"+"strategy_name"+debug')
-    parser.add_argument('--seed', type=int, default=229,
-                        help='choose the random seed, default 229')
     # pde setting
     parser.add_argument('--pde', type=str, default='LdC2D',
                         help='pde type: default is Poisson2D1Peak. Others please see in libs')
@@ -29,7 +27,7 @@ def main():
     parser.add_argument('--epoch', nargs='+', type=int, default=[10, 10, 10, 10],
                         help='number of epochs, [adam_pretrain, lbfgs_pretrain, adam, lebfgs] the pre-training use adam of pretrain_epoch+lbfgs_epoch, if lbfgs_epoch=0, means no lbfgs in training. ')
     # adaptive sample setting
-    parser.add_argument('--strategy', type=str, default='AAIS_t_add',
+    parser.add_argument('--strategy', type=str, default='AAIS_g_add',
                         help='adaptive strategy: combination=SampleMethod_NodeCombineMethod, SampleMethod has "Uni", "AAIS_g", "AAIS_t", "RAD", NodeCombineMethod has "resample')
     parser.add_argument('--num_sample', nargs='+', type=int, default=[100, 100, 200],
                         help='num sampled in the domain, num[0] means the number of points uniformly sampled in the domain during the pretrain, num[1] means the number of points sampled on the boundary(including initial hypersurface), num[2] means the resampled(or added) points in the domain by different sampling methods.')
@@ -43,7 +41,6 @@ def main():
     parser.add_argument('--loss_tol', type=int, default=0,
                         help='loss tolerance for model')
     args = parser.parse_args()
-    get_seed(args.seed)
     device = torch.device('cuda:'+args.cuda_dev if torch.cuda.is_available() else 'cpu')
     print(f"\nUsing {device}\n")
     try:
