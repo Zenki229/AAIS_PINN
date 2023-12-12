@@ -46,7 +46,7 @@ class TrainResample:
         self.logger.info('=' * 3 + f' First Training with inside node shape {node_domain["in"].shape[0]}' + '=' * 10)
         t1 = time.time()
         rec, loss_save = run_train(self.net, self.pde, node_domain, self.epoch_init,
-                        self.optimizer,  self.lbfgs, self.logger, self.file_path, loss_save)
+                        self.optimizer,  self.lbfgs_pretrain, self.logger, self.file_path, loss_save)
         t_train = time.time() - t1
         self.logger.info('=' * 3 + f'Train Done, time ' + time.strftime("%H:%M:%S", time.gmtime(t_train)) + '=' * 10)
         with open(self.file_path + "/train" + f"/rec_0.pkl", "wb") as f:
@@ -143,7 +143,7 @@ class TrainAdd:
         self.logger.info('=' * 3 + f' First Training with inside node shape {node_domain["in"].shape[0]}' + '=' * 10)
         t1 = time.time()
         rec, loss_save = run_train(self.net, self.pde, node_domain, self.epoch_init,
-                        self.optimizer, self.lbfgs, self.logger, self.file_path, loss_save)
+                        self.optimizer, self.lbfgs_pretrain, self.logger, self.file_path, loss_save)
         t_train = time.time() - t1
         self.logger.info('=' * 3 + f'Train Done, time ' + time.strftime("%H:%M:%S", time.gmtime(t_train)) + '=' * 10)
         with open(self.file_path + "/train" + f"/rec_0.pkl", "wb") as f:
