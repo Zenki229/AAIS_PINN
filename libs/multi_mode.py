@@ -376,7 +376,7 @@ class Mixt:
         else:
             # print('add p')
             weight = np.max(ess_merge) / (0.1 + np.max(ess_merge))
-            self.add_params(p, weight=0.5)
+            self.add_params(p, weight=weight)
 
     def add_params(self, component, weight):
         # weight = 0.5
