@@ -227,14 +227,14 @@ class Burgers2D:
             node = np.concatenate((np.ones_like(x) * t[ind], x), axis=1)
             node = torch.from_numpy(node).to(device=self.dev)
             val_t = net(node).detach().cpu().numpy().flatten()
-            axes[1, count].plot(x, sol_t.flatten(), 'b--', label=f'$u^*({t_now}, x)$')
-            axes[1, count].plot(x, val_t, 'r', label=f'$u^\\theta_{{{num}}}({t_now}, x)$')
+            axes[1, count].plot(x, sol_t.flatten(), 'r', label=f'$u^*({t_now}, x)$')
+            axes[1, count].plot(x, val_t, 'b--', label=f'$u^\\theta_{{{num}}}({t_now}, x)$')
             err = np.sqrt(np.sum(np.power(val_t - sol_t, 2)) / np.sum(np.power(sol_t, 2)))
             axes[1, count].set_title(f'$e_t(u^\\theta_{{{num}}},{t_now})={round(err, 4)}$')
             axes[1, count].legend(loc='upper right')
             axes[1, count].set_xlabel('$x$')
             count += 1
-        plt.savefig(path + f'/{num}_sol.png')
+        plt.savefig(path + f'/{num}_sol.png', dpi=300)
         plt.close()
 
 
