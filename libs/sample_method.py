@@ -154,14 +154,13 @@ class AAISt:
         dim = self.dim
         ess_lad = self.ess_dict['ladder']
         ess_merge = self.ess_dict['merge']
-        del_ts = self.ess_dict['delete']
         ess_add = self.ess_dict['add']
         count_lad = self.count_dict['ladder']
         count_total = self.count_dict['total']
         count_add = self.count_dict['add']
         n = node.shape[0]
         num = int(np.ceil(n * 0.1))
-        cov_init = 1/(np.power(0.1*num, 2))
+        cov_init = 1/(np.power(10*num, 2))
         #cov_init = 0.01
         # validity check
         if (len(ess_lad) != len(self.a_lad)) | (len(count_lad) != len(self.a_lad)):
@@ -202,7 +201,7 @@ class AAISt:
                 ess_p = p.ess(IS_w_p, num)
                 count_p = 0
                 while ess_p <= ess_add:
-                    p.params = p.EM_alg(node_p, IS_w_p, del_ts)
+                    p.params = p.EM_alg(node_p, IS_w_p, del_ts=1/proposal.params.shape[0]*0.01)
                     node_p = p.sampling(num)
                     IS_w_p = p.IS_w(f, node_p)
                     ess_p = p.ess(IS_w_p, num)
@@ -211,7 +210,7 @@ class AAISt:
                         break
                 proposal.update_new(p, node_p, ess_merge, num)
                 # proposal.add_params(component=p, weight=0.5)
-                for i in range(np.min((int(np.ceil(proposal.params.shape[0] / 10)) + 1, 2))):
+                for i in range(np.max((int(np.ceil(proposal.params.shape[0] / 10)) + 1, 5))):
                     node_q = proposal.sampling(n)
                     IS_w_q = proposal.IS_w(f, node_q)
                     proposal.params = proposal.EM_alg(node_q, IS_w_q, del_ts=1/proposal.params.shape[0]*0.01)

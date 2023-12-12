@@ -32,7 +32,7 @@ AllenCahn2D:
   tlim: [0, 1]
   input_size: 2
   output_size: 1
-  weight: { 'in': 1, 'bd': 0.1, "init": 0.1 }
+  weight: { 'in': 1, 'bd': 1, "init": 10 }
 
 AC2DHC:
   xlim: [-1, 1]
@@ -116,8 +116,8 @@ AAIS_g:
 
 AAIS_t:
   a_ladder: [0.7,0.9,1.0]
-  ess_dict: {'merge': 0.85, 'delete': 0.0001, 'add': 0.15, 'ladder':[0.90,0.88,0.85]}
-  count_dict: {'total': 300, 'add': 10, 'ladder': [100,100,100]}
+  ess_dict: {'merge': 0.85, 'add': 0.15, 'ladder':[0.90,0.88,0.85]}
+  count_dict: {'total': 300, 'add': 100, 'ladder': [100,100,100]}
   df: 3
   
 AAIS_t_highess:
