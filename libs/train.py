@@ -7,8 +7,7 @@ import time
 
 
 class TrainResample:
-    def __init__(self, pde, net, dev, optimizer, lbfgs_pretrain, lbfgs, optim_epoch, file_path, logger: logging, num_add, num_search, max_iter, loss_tol, sample_method, IS_sign
-                 ):
+    def __init__(self, pde, net, dev, optimizer, lbfgs_pretrain, lbfgs, optim_epoch, file_path, logger: logging, num_add, num_search, max_iter, sample_method):
         self.net = net
         self.pde = pde
         self.dev = dev
@@ -22,9 +21,7 @@ class TrainResample:
         self.num_resap = num_add
         self.sample_method = sample_method
         self.max_iter = max_iter
-        self.loss_tol = loss_tol
         self.num_search = num_search
-        self.IS_sign = IS_sign
 
     def forward(self):
         def target(node_cpu):
@@ -32,12 +29,10 @@ class TrainResample:
             node_gpu = torch.from_numpy(node_cpu).to(device=self.dev)
             return np.where(self.pde.is_node_in(node_gpu).detach().cpu().numpy(),
                             torch.pow(input=self.pde.residual(node=node_gpu, net=self.net, cls="ele", mode="in"), exponent=2).detach().cpu().numpy(), 0)
-        if self.IS_sign:
-            ess = np.zeros((0, 1))
-            shape = np.zeros((0, 1))
-            np.save(self.file_path+'/train/'+'ess.npy', ess)
-            np.save(self.file_path + '/train/' + 'shape.npy', shape)
-            node_search = self.pde.sample(self.num_search, 'in').detach().cpu().numpy()
+        ess = np.zeros((0, 1))
+        shape = np.zeros((0, 1))
+        np.save(self.file_path+'/train/'+'ess.npy', ess)
+        np.save(self.file_path + '/train/' + 'shape.npy', shape)
         log = self.logger
         loss_save = 100000.0
         node_domain = {}
@@ -45,34 +40,22 @@ class TrainResample:
             node_domain[state] = self.pde.sample(self.pde.size[state], state)
         self.logger.info('=' * 3 + f' First Training with inside node shape {node_domain["in"].shape[0]}' + '=' * 10)
         t1 = time.time()
-        rec, loss_save = run_train(self.net, self.pde, node_domain, self.epoch_init,
-                        self.optimizer,  self.lbfgs_pretrain, self.logger, self.file_path, loss_save)
+        rec, loss_save = run_train(self.net, self.pde, node_domain, self.epoch_init, self.optimizer,  self.lbfgs_pretrain, self.logger, self.file_path, loss_save)
         t_train = time.time() - t1
         self.logger.info('=' * 3 + f'Train Done, time ' + time.strftime("%H:%M:%S", time.gmtime(t_train)) + '=' * 10)
         with open(self.file_path + "/train" + f"/rec_0.pkl", "wb") as f:
             pickle.dump(rec, f)
-        self.pde.test_err_plot(self.net, self.file_path + '/test', 0)
-        count = 1
-        while (loss_save > self.loss_tol) & (count <= self.max_iter):
+        self.pde.test_err_plot(self.net, self.file_path + '/test', 'pre')
+        for count in range(100):
+            node_search = self.pde.sample(self.num_search, 'in').detach().cpu().numpy()
             node = node_domain.copy()
-            if self.IS_sign:
-                log.info('=' * 3 + f'{count}-th ' + f'{self.sample_method.__class__.__name__}' + f' with num {node_search.shape[0]}' + '=' * 10)
-            else:
-                log.info(
-                    '=' * 3 + f'{count}-th ' + f'{self.sample_method.__class__.__name__}' + '=' * 10)
+            log.info('=' * 3 + f'{count}-th ' + f'{self.sample_method.__class__.__name__}' + f' with num {node_search.shape[0]}' + '=' * 10)
             t1 = time.time()
-            if self.IS_sign:
-                node_loss, proposal = self.sample_method.sample(target, node_search,
-                                                                self.pde.is_node_in, self.num_resap,
-                                                                path=self.file_path)
-                node_loss = torch.from_numpy(node_loss).to(device=self.dev)
-            else:
-                node_loss = self.pde.sample(self.num_resap, 'in')
-                proposal = None
+            node_loss, proposal = self.sample_method.sample(target, node_search, self.pde.is_node_in, self.num_resap, path=self.file_path)
+            node_loss = torch.from_numpy(node_loss).to(device=self.dev)
             self.pde.target_node_plot_together(loss=target,
                                                node_add=node_loss,
                                                node_domain=node_domain,
-                                               IS_sign=self.IS_sign,
                                                proposal=proposal,
                                                path=self.file_path + '/img',
                                                num=count)
@@ -81,8 +64,7 @@ class TrainResample:
             node['in'] = torch.cat((node['in'].detach(), node_loss), dim=0)
             self.logger.info('=' * 3 + f'{count}-th Training with node shape {node["in"].shape[0]}' + '=' * 10)
             t1 = time.time()
-            rec, loss_save = run_train(self.net, self.pde, node, self.epoch,
-                            self.optimizer, self.lbfgs, self.logger, self.file_path, loss_save)
+            rec, loss_save = run_train(self.net, self.pde, node, self.epoch, self.optimizer, self.lbfgs, self.logger, self.file_path, loss_save)
             t_train = time.time() - t1
             self.logger.info(
                 '=' * 3 + f'Train Done, time ' + time.strftime("%H:%M:%S", time.gmtime(t_train)) + '=' * 10)
@@ -96,11 +78,11 @@ class TrainResample:
             ind = np.random.choice(a=len(node_aux), size=self.pde.size['in'], replace=False)
             node_domain['in'] = node_aux[ind, :]
             self.pde.test_err_plot(self.net, self.file_path + '/test', count)
-            count += 1
         net = torch.load(self.file_path + f"/net/net_bestloss.pkl")
         err_save = self.pde.test_err(net)
-        self.logger.info('=' * 3 + f'the best loss is {round(err_save,4)}')
+        self.logger.info('=' * 3 + f'the best solution err is {round(err_save,4)}')
         self.pde.test_err_plot(net, self.file_path + '/test', 'best')
+
 
 class TrainAdd:
     def __init__(self, pde, net, dev, optimizer, lbfgs_pretrain, lbfgs, optim_epoch, file_path, logger: logging, num_add, num_search, max_iter, loss_tol, sample_method, IS_sign
@@ -296,13 +278,19 @@ def shape_ess_plot(path_father):
     ax.plot(x, shape)
     plt.savefig(path_father + '/img/' + 'shape_plot.jpg')
     plt.close()
+    ess_shape = np.stack([ess, shape], axis=1)
+    np.save(path_father + '/train' + '/ess_shape.npy', ess_shape)
 
 
 if __name__ == "__main__":
     # path = input("input path_father:")
-    loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_Uni_resample_19076082_500e-pp1")
-    loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_Uni_add_19076082_500e-pp1")
-    loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_Uni_resample_19076082_1000e-pp1")
-    loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_Uni_add_19076082_1000e-pp1")
+    # loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_AAIS_g_resample_19076082_500e-pp1")
+    # loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_AAIS_g_add_19076082_500e-pp1")
+    # loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_AAIS_g_resample_19076082_1000e-pp1")
+    # loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_AAIS_g_add_19076082_1000e-pp1")
+    shape_ess_plot("../results/Poisson2D1Peak/Poisson2D1Peak_AAIS_t_resample_19076082_500e-pp1")
+    shape_ess_plot("../results/Poisson2D1Peak/Poisson2D1Peak_AAIS_t_add_19076082_500e-pp1")
+    shape_ess_plot("../results/Poisson2D1Peak/Poisson2D1Peak_AAIS_t_resample_19076082_1000e-pp1")
+    shape_ess_plot("../results/Poisson2D1Peak/Poisson2D1Peak_AAIS_t_add_19076082_1000e-pp1")
     # shape_ess_plot("../results/Burgers1D_v1Uni_resample_1116-aft-1")
 

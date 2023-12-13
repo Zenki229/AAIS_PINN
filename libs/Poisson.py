@@ -108,7 +108,7 @@ class Poisson2D1Peak:
         err = np.sqrt(np.sum(np.power(val - exact, 2)) / np.sum(np.power(exact, 2)))
         return err
 
-    def target_node_plot_together(self, node_domain, node_add, loss, proposal, IS_sign, path, num):
+    def target_node_plot_together(self, node_domain, node_add, loss, proposal, path, num):
         node_all = torch.cat([node_domain['in'].detach(),
                               node_domain['bd'].detach()])
         node_all = node_all.cpu().numpy()
@@ -117,57 +117,35 @@ class Poisson2D1Peak:
         mesh_x, mesh_y = self.grid(size=256)
         node = np.stack((mesh_x.flatten(), mesh_y.flatten()), axis=1)
         val = loss(node).reshape(mesh_x.shape)
-        if (IS_sign == 0) | (proposal is None):
-            fig, ax = plt.subplots(1, 2, layout='constrained', figsize=(12.8, 4.8))
-            # plot loss
-            plot = ax[0].pcolormesh(mesh_x, mesh_y, val, shading='gouraud', cmap='jet', vmin=0, vmax=np.max(val))
-            fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title(f'residual $\\mathcal{{Q}}_{{{num}}}$')
-            ax[0].set_xlabel('$x$')
-            ax[0].set_ylabel('$y$')
-            # plot node
-            ax[1].set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
-            ax[1].set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.15)
-            ax[1].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{{{num}}}$')
-            ax[1].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
-            ax[1].legend(loc='upper right', fontsize=12)
-            ax[1].set_title(f'nodes')
-            ax[1].set_xlabel('$x$')
-            ax[1].set_ylabel('$y$')
-            plt.savefig(path + f'/{num}_loss.png', dpi=300)
-            plt.close()
+        fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
+        # plot loss
+        plot = ax.pcolormesh(mesh_x, mesh_y, val, shading='gouraud', cmap='jet', vmin=0, vmax=np.max(val))
+        fig.colorbar(plot, ax=ax, format="%1.1e")
+        ax.set_xlabel('$x$')
+        ax.set_ylabel('$y$')
+        fig.savefig(path+f'/{num}_loss.png', dpi=300)
+        plt.close(fig)
+        # plot node
+        fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
+        ax.set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.20)
+        ax.set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.20)
+        ax.scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.', s=np.ones_like(node_all[:, 0]), alpha=0.3, label=f'$\\mathcal{{S}}_{{{num}}}$')
+        ax.scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.', s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
+        ax.legend(loc='upper right', fontsize=12)
+        ax.set_xlabel('$x$')
+        ax.set_ylabel('$y$')
+        fig.savefig(path + f'/{num}_node.png', dpi=300)
+        plt.close(fig)
         if proposal:
             val_prop = proposal(node).reshape(mesh_x.shape)
-            fig, ax = plt.subplots(1, 3, layout='constrained', figsize=(19.2, 4.8))
-            # plot loss
-            plot = ax[0].pcolormesh(mesh_x, mesh_y, val, shading='gouraud',
-                                    cmap='jet', vmin=0, vmax=np.max(val))
-            fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title(f'residual $\\mathcal{{Q}}_{{{num}}}$')
-            ax[0].set_xlabel('$x$')
-            ax[0].set_ylabel('$y$')
+            fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
             # plot proposal
-            plot = ax[1].pcolormesh(mesh_x, mesh_y, val_prop, shading='gouraud',
-                                    cmap='jet', vmin=0, vmax=np.max(val_prop))
-            fig.colorbar(plot, ax=ax[1], format="%1.1e")
-            ax[1].set_title('proposal')
-            ax[1].set_xlabel('$x$')
-            ax[1].set_ylabel('$y$')
-            # plot node
-            ax[2].set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
-            ax[2].set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.15)
-            ax[2].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{{{num}}}$')
-            ax[2].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
-            ax[2].legend(loc='upper right', fontsize=12)
-            ax[2].set_title('nodes')
-            ax[2].set_xlabel('$x$')
-            ax[2].set_ylabel('$y$')
-            plt.savefig(path + f'/{num}_loss.png', dpi=300)
-            plt.close()
+            plot = ax.pcolormesh(mesh_x, mesh_y, val_prop, shading='gouraud', cmap='jet', vmin=0, vmax=np.max(val_prop))
+            fig.colorbar(plot, ax=ax, format="%1.1e")
+            ax.set_xlabel('$x$')
+            ax.set_ylabel('$y$')
+            fig.savefig(path + f'/{num}_proposal.png', dpi=300)
+            plt.close(fig)
 
     def test_err_plot(self, net, path, num):
         mesh_x, mesh_y = self.grid(size=256)
@@ -177,30 +155,32 @@ class Poisson2D1Peak:
         exact = np.exp(-1000 * ((node[:, 0] - 0.5) ** 2 + (node[:, 1] - 0.5) ** 2))
         err = np.sqrt(np.sum(np.power(val - exact, 2)) / np.sum(np.power(exact, 2)))
         err_plt = np.abs(val - exact)
-        fig, ax = plt.subplots(1, 3, layout='constrained', figsize=(19.2, 4.8))
         # err plot
-        plot = ax[0].pcolormesh(mesh_x, mesh_y, err_plt.reshape(mesh_x.shape), shading='gouraud',
-                                cmap='jet', vmin=0, vmax=np.max(err_plt))
-        fig.colorbar(plot, ax=ax[0], format="%1.1e")
-        ax[0].set_title(f'$e_r(u^\\theta_{{{num}}})={round(err, 4)}$')
-        ax[0].set_xlabel('$x$')
-        ax[0].set_ylabel('$y$')
+        fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
+        plot = ax.pcolormesh(mesh_x, mesh_y, err_plt.reshape(mesh_x.shape), shading='gouraud',cmap='jet', vmin=0, vmax=np.max(err_plt))
+        fig.colorbar(plot, ax=ax, format="%1.1e")
+        ax.set_title(f'$e_r(u_{{{num}}}(\\cdot;\\theta))={round(err, 4)}$')
+        ax.set_xlabel('$x$')
+        ax.set_ylabel('$y$')
+        fig.savefig(path+f'/{num}_abs.png', dpi=300)
+        plt.close(fig)
         # val plot
-        plot = ax[1].pcolormesh(mesh_x, mesh_y, val.reshape(mesh_x.shape), shading='gouraud',
-                                cmap='jet', vmin=np.min(val), vmax=np.max(val))
-        fig.colorbar(plot,  ax=ax[1], format="%1.1e")
-        ax[1].set_title(f'$u^\\theta_{{{num}}}$')
-        ax[1].set_xlabel('$x$')
-        ax[1].set_ylabel('$y$')
+        fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
+        plot = ax.pcolormesh(mesh_x, mesh_y, val.reshape(mesh_x.shape), shading='gouraud', cmap='jet', vmin=np.min(val), vmax=np.max(val))
+        fig.colorbar(plot,  ax=ax, format="%1.1e")
+        ax.set_xlabel('$x$')
+        ax.set_ylabel('$y$')
+        fig.savefig(path+f'/{num}_sol.png', dpi=300)
+        plt.close(fig)
         # exact plot
-        plot = ax[2].pcolormesh(mesh_x, mesh_y, exact.reshape(mesh_x.shape), shading='gouraud',
-                                cmap='jet', vmin=0, vmax=1)
-        fig.colorbar(plot, ax=ax[2], format="%1.1e")
-        ax[2].set_title(f'$u^*$')
-        ax[2].set_xlabel('$x$')
-        ax[2].set_ylabel('$y$')
-        plt.savefig(path + f'/{num}_sol.png', dpi=300)
-        plt.close()
+        if num == 0:
+            fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
+            plot = ax.pcolormesh(mesh_x, mesh_y, exact.reshape(mesh_x.shape), shading='gouraud',cmap='jet', vmin=0, vmax=1)
+            fig.colorbar(plot, ax=ax, format="%1.1e")
+            ax.set_xlabel('$x$')
+            ax.set_ylabel('$y$')
+            fig.savefig(path + f'/{num}_exact.png', dpi=300)
+            plt.close(fig)
 
 
 class Poisson2D9Peak:

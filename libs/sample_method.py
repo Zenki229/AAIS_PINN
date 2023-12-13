@@ -6,7 +6,12 @@ from libs.multi_mode import *
 
 
 class Uni:
-    a = 0
+    def __init__(self, sample):
+        self.sampling = sample
+
+    def sample(self, target, node, judge, num_output, path):
+        node = self.sampling(num_output, 'in')
+        return node.detach().cpu().numpy(), None
 
 
 class RAD:

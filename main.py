@@ -17,7 +17,7 @@ def main():
                         help='name of current saving folder in ./results, '
                              'default: "pde_name"+"domain_name"+"strategy_name"+debug')
     # pde setting
-    parser.add_argument('--pde', type=str, default='LdC2D',
+    parser.add_argument('--pde', type=str, default='Poisson2D1Peak',
                         help='pde type: default is Poisson2D1Peak. Others please see in libs')
     # net and optimizer
     parser.add_argument('--NeuralShape', nargs='+', type=int, default=[20, 7],
@@ -27,7 +27,7 @@ def main():
     parser.add_argument('--epoch', nargs='+', type=int, default=[10, 10, 10, 10],
                         help='number of epochs, [adam_pretrain, lbfgs_pretrain, adam, lebfgs] the pre-training use adam of pretrain_epoch+lbfgs_epoch, if lbfgs_epoch=0, means no lbfgs in training. ')
     # adaptive sample setting
-    parser.add_argument('--strategy', type=str, default='AAIS_g_add',
+    parser.add_argument('--strategy', type=str, default='RAD_resample',
                         help='adaptive strategy: combination=SampleMethod_NodeCombineMethod, SampleMethod has "Uni", "AAIS_g", "AAIS_t", "RAD", NodeCombineMethod has "resample')
     parser.add_argument('--num_sample', nargs='+', type=int, default=[100, 100, 200],
                         help='num sampled in the domain, num[0] means the number of points uniformly sampled in the domain during the pretrain, num[1] means the number of points sampled on the boundary(including initial hypersurface), num[2] means the resampled(or added) points in the domain by different sampling methods.')
@@ -38,8 +38,6 @@ def main():
     # train set
     parser.add_argument('--max_iter', type=int, default=100,
                         help='max iteration for retrain, default is 100')
-    parser.add_argument('--loss_tol', type=int, default=0,
-                        help='loss tolerance for model')
     args = parser.parse_args()
     device = torch.device('cuda:'+args.cuda_dev if torch.cuda.is_available() else 'cpu')
     print(f"\nUsing {device}\n")
@@ -78,41 +76,16 @@ def main():
     elif 'Poisson2DLshape' in args.pde:
         from libs.Poisson import Poisson2DLshape
         pde = Poisson2DLshape(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1], **configs)
-    elif 'Heat3D' in args.pde:
-        from libs.Heat import Heat2D
-        pde = Heat2D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1], **configs)
     elif 'Burgers2D' in args.pde:
         from libs.Burgers import Burgers2D
         pde = Burgers2D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1], **configs)
-    elif 'Burgers3D' in args.pde:
-        from libs.Burgers import Burgers3D
-        pde = Burgers3D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1],
-                        **configs)
-    elif 'NSCylinder' in args.pde:
-        from libs.NavierStokes import NSCylinder
-        pde = NSCylinder(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1], **configs)
-    elif 'NSwake' in args.pde:
-        from libs.NavierStokes import NSWake
-        pde = NSWake(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1], **configs)
     elif 'AllenCahn2D' in args.pde:
         from libs.AllenCahn import AllenCahn2D
         pde = AllenCahn2D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1],
                           **configs)
-    elif 'AC2DHC' in args.pde:
-        from libs.AllenCahn import AC2DHC
-        pde = AC2DHC(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1],
-                     **configs)
     elif 'KdV2D' in args.pde:
         from libs.KdV import KdV1D
         pde = KdV1D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1],
-                    **configs)
-    elif 'Wave3D' in args.pde:
-        from libs.Wave import Wave2D
-        pde = Wave2D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1],
-                     **configs)
-    elif 'LdC2D' in args.pde:
-        from libs.NavierStokes import LdC2D
-        pde = LdC2D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1],
                     **configs)
     else:
         raise NotImplementedError
@@ -151,7 +124,6 @@ def main():
         )
     else:
         lbfgs = None
-    IS_sign = True
     if 'AAIS_t' in args.strategy:
         if 'highess' in args.strategy:
             configs = load_yaml(r'./configs.yml', key='AAIS_t_highess')
@@ -175,8 +147,7 @@ def main():
     elif 'Uni' in args.strategy:
         with open(path_father + "/inform.txt", "a") as f:
             f.write('Uni_resample' + "\n")
-        sample_method_choose = Uni
-        IS_sign = False
+        sample_method_choose = Uni(sample=pde.sample)
     else:
         raise NotImplementedError
     params = {
@@ -192,9 +163,7 @@ def main():
         'num_search': args.num_search,
         'logger': logger,
         'sample_method': sample_method_choose,
-        'IS_sign': IS_sign,
         'max_iter': args.max_iter,
-        'loss_tol': args.loss_tol
     }
     if 'resample' in args.strategy:
         go_train = TrainResample(**params)
@@ -204,8 +173,7 @@ def main():
         raise NotImplementedError
     go_train.forward()
     loss_err_plot(path_father=path_father)
-    if IS_sign:
-        shape_ess_plot(path_father=path_father)
+    shape_ess_plot(path_father=path_father)
 
 
 if __name__ == "__main__":
