@@ -58,7 +58,7 @@ class TrainResample:
                                                node_domain=node_domain,
                                                proposal=proposal,
                                                path=self.file_path + '/img',
-                                               num=count)
+                                               num=count+1)
             t2 = time.time() - t1
             log.info('=' * 3 + 'End sample time' + time.strftime("%H:%M:%S", time.gmtime(t2)) + '=' * 10)
             node['in'] = torch.cat((node['in'].detach(), node_loss), dim=0)
@@ -77,7 +77,7 @@ class TrainResample:
             node_aux = torch.cat([node_domain['in'], node_loss], dim=0)
             ind = np.random.choice(a=len(node_aux), size=self.pde.size['in'], replace=False)
             node_domain['in'] = node_aux[ind, :]
-            self.pde.test_err_plot(self.net, self.file_path + '/test', count)
+            self.pde.test_err_plot(self.net, self.file_path + '/test', count+1)
         net = torch.load(self.file_path + f"/net/net_bestloss.pkl")
         err_save = self.pde.test_err(net)
         self.logger.info('=' * 3 + f'the best solution err is {round(err_save,4)}')
