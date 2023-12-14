@@ -1,7 +1,7 @@
 from .utils import *
 
 
-class KdV1D:
+class KdV2D:
 
     def __init__(self,  dev, dtp, weight, xlim, tlim, num_in, num_bd, input_size, output_size, lam):
         self.dim, self.dev, self.dtp, self.weight, self.xlim, self.tlim, self.input_size, self.output_size, self.lam \
@@ -127,7 +127,7 @@ class KdV1D:
         err = np.sqrt(np.sum(np.power(val - sol, 2)) / np.sum(np.power(sol, 2)))
         return err
 
-    def target_node_plot_together(self, loss, node_add, node_domain, IS_sign, proposal, path, num):
+    def target_node_plot_together(self, loss, node_add, node_domain, proposal, path, num):
         node_all = torch.cat([node_domain['in'].detach(),
                               node_domain['bd'].detach(),
                               node_domain['init'].detach()], dim=0)
@@ -137,56 +137,37 @@ class KdV1D:
         mesh_t, mesh_x = self.grid(size=256)
         node = np.stack((mesh_t.flatten(), mesh_x.flatten()), axis=1)
         val = loss(node).reshape(mesh_t.shape)
-        if (IS_sign == 0) | (proposal is None):
-            fig, ax = plt.subplots(1, 2, layout='constrained', figsize=(12.8, 4.8))
-            # plot loss
-            plot = ax[0].pcolormesh(mesh_t, mesh_x, val, shading='gouraud', cmap='jet', vmin=0, vmax=np.max(val))
-            fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title(f'residual $\\mathcal{{Q}}_{{{num}}}$')
-            ax[0].set_xlabel('$t$')
-            ax[0].set_ylabel('$x$')
-            # plot node
-            ax[1].set_xlim(ts - (te - ts) * 0.05, te + (te - ts) * 0.15)
-            ax[1].set_ylim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
-            ax[1].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{{{num}}}$')
-            ax[1].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
-            ax[1].legend(loc='upper right')
-            ax[1].set_title('nodes')
-            ax[1].set_xlabel('$t$')
-            ax[1].set_ylabel('$x$')
-            plt.savefig(path + f'/{num}_loss.png', dpi=300)
-            plt.close()
+        fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
+        # plot loss
+        plot = ax.pcolormesh(mesh_t, mesh_x, val, shading='gouraud', cmap='jet', vmin=0, vmax=np.max(val))
+        fig.colorbar(plot, ax=ax, format="%1.1e")
+        ax.set_xlabel('$t$')
+        ax.set_ylabel('$x$')
+        fig.savefig(path + f'/{num}_loss.png', dpi=300)
+        plt.close(fig)
+        # plot node
+        fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
+        ax.set_xlim(ts - (te - ts) * 0.05, te + (te - ts) * 0.20)
+        ax.set_ylim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.20)
+        ax.scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.', s=np.ones_like(node_all[:, 0]), alpha=0.3,
+                   label=f'$\\mathcal{{S}}_{{{num}}}$')
+        ax.scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.', s=np.ones_like(node_add[:, 0]), alpha=1.0,
+                   label=f'$\\mathcal{{D}}$')
+        ax.legend(loc='upper right')
+        ax.set_xlabel('$t$')
+        ax.set_ylabel('$x$')
+        fig.savefig(path + f'/{num}_node.png', dpi=300)
+        plt.close(fig)
         if proposal:
             val_prop = proposal(node).reshape(mesh_x.shape)
-            fig, ax = plt.subplots(1, 3, layout='constrained', figsize=(19.2, 4.8))
-            # plot loss
-            plot = ax[0].pcolormesh(mesh_t, mesh_x, val, shading='gouraud',
-                                    cmap='jet', vmin=0, vmax=np.max(val))
-            fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title(f'residual $\\mathcal{{Q}}_{{{num}}}$')
-            ax[0].set_xlabel('$t$')
-            ax[0].set_ylabel('$x$')
+            fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
             # plot proposal
-            plot = ax[1].pcolormesh(mesh_t, mesh_x, val_prop, shading='gouraud',
-                                    cmap='jet', vmin=0, vmax=np.max(val_prop))
-            fig.colorbar(plot, ax=ax[1], format="%1.1e")
-            ax[1].set_title('proposal')
-            ax[1].set_xlabel('$t$')
-            ax[1].set_ylabel('$x$')
-            # plot node
-            ax[2].set_xlim(ts - (te - ts) * 0.05, te + (te - ts) * 0.15)
-            ax[2].set_ylim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
-            ax[2].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{{{num}}}$')
-            ax[2].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
-            ax[2].legend(loc='upper right')
-            ax[2].set_title('nodes')
-            ax[2].set_xlabel('$t$')
-            ax[2].set_ylabel('$x$')
-            plt.savefig(path + f'/{num}_loss.png', dpi=300)
+            plot = ax.pcolormesh(mesh_t, mesh_x, val_prop, shading='gouraud',
+                                 cmap='jet', vmin=0, vmax=np.max(val_prop))
+            fig.colorbar(plot, ax=ax, format="%1.1e")
+            ax.set_xlabel('$t$')
+            ax.set_ylabel('$x$')
+            plt.savefig(path + f'/{num}_proposal.png', dpi=300)
             plt.close()
 
     def test_err_plot(self, net, path, num):
@@ -199,34 +180,45 @@ class KdV1D:
         sol = exact.flatten()
         err = np.sqrt(np.sum(np.power(val - sol, 2)) / np.sum(np.power(sol, 2)))
         err_plt = np.abs(val - sol)
-        fig, axes = plt.subplots(2, 3, layout='constrained', figsize=(19.2, 9.6))
         # plot absolute error
-        plot = axes[0, 0].pcolormesh(mesh_t, mesh_x, err_plt.reshape(mesh_x.shape), shading='gouraud',
-                                     cmap='jet', vmin=0, vmax=np.max(err_plt))
-        fig.colorbar(plot, ax=axes[0, 0], format="%1.1e")
-        axes[0, 0].set_title(f'$e_r(u^\\theta_{{{num}}})={round(err, 4)}$')
+        fig, axes = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
+        plot = axes.pcolormesh(mesh_t, mesh_x, err_plt.reshape(mesh_x.shape), shading='gouraud', cmap='jet', vmin=0, vmax=np.max(err_plt))
+        fig.colorbar(plot, ax=axes, format="%1.1e")
+        axes.set_xlabel('$t$')
+        axes.set_ylabel('$x$')
+        axes.set_title(f'$e_r(u_{{{num}}}(\\cdot;\\theta))={round(err, 4)}$')
+        fig.savefig(path + f'/{num}_abs.png', dpi=300)
+        plt.close(fig)
         # plot predict
-        plot = axes[0, 1].pcolormesh(mesh_t, mesh_x, val.reshape(mesh_x.shape), shading='gouraud',
+        fig, axes = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
+        plot = axes.pcolormesh(mesh_t, mesh_x, val.reshape(mesh_x.shape), shading='gouraud',
                                      cmap='jet', vmin=-1.05, vmax=1.05)
-        fig.colorbar(plot, ax=axes[0, 1], format="%1.1e")
-        axes[0, 1].set_title(f'$u^\\theta_{{{num}}}$')
+        fig.colorbar(plot, ax=axes, format="%1.1e")
+        axes.set_xlabel('$t$')
+        axes.set_ylabel('$x$')
+        fig.savefig(path + f'/{num}_sol.png', dpi=300)
+        plt.close(fig)
         # plot exact
-        plot = axes[0, 2].pcolormesh(mesh_t, mesh_x, exact, shading='gouraud',
-                                     cmap='jet', vmin=-1.05, vmax=1.05)
-        fig.colorbar(plot, ax=axes[0, 2], format="%1.1e")
-        axes[0, 2].set_title(f'$u^*$')
+        if num == 1:
+            fig, axes = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
+            plot = axes.pcolormesh(mesh_t, mesh_x, exact, shading='gouraud', cmap='jet', vmin=-1.05, vmax=1.05)
+            fig.colorbar(plot, ax=axes, format="%1.1e")
+            axes.set_xlabel('$t$')
+            axes.set_ylabel('$x$')
+            fig.savefig(path + f'/{num}_exact.png', dpi=300)
+            plt.close(fig)
         # plot at t
-        t_plt = [0.10, 0.50, 0.90]
-        for count, t_now in enumerate(t_plt):
-            ind = np.where(t == t_now)[0]
-            sol_t = exact[ind, :]
-            node = np.stack((np.ones_like(x) * t[ind], x), axis=1)
-            node = torch.from_numpy(node).to(device=self.dev, dtype=self.dtp)
-            val_t = net(node).detach().cpu().numpy().flatten()
-            axes[1, count].plot(x, sol_t.flatten(), 'b--', label=f'$u^*({t_now}, x)$')
-            axes[1, count].plot(x, val_t, 'r', label=f'$u^\\theta_{{{num}}}({t_now}, x)$')
-            err_t = np.sqrt(np.sum(np.power(val_t-sol_t, 2))/np.sum(np.power(sol_t, 2)))
-            axes[1, count].set_title(f'$e_t(u^\\theta_{{{num}}}, {t_now})={round(err_t, 4)}$')
-            axes[1, count].legend(loc='upper right')
-        plt.savefig(path + f'/{num}_sol.png')
-        plt.close()
+        # t_plt = [0.10, 0.50, 0.90]
+        # for count, t_now in enumerate(t_plt):
+        #     ind = np.where(t == t_now)[0]
+        #     sol_t = exact[ind, :]
+        #     node = np.stack((np.ones_like(x) * t[ind], x), axis=1)
+        #     node = torch.from_numpy(node).to(device=self.dev, dtype=self.dtp)
+        #     val_t = net(node).detach().cpu().numpy().flatten()
+        #     axes[1, count].plot(x, sol_t.flatten(), 'b--', label=f'$u^*({t_now}, x)$')
+        #     axes[1, count].plot(x, val_t, 'r', label=f'$u^\\theta_{{{num}}}({t_now}, x)$')
+        #     err_t = np.sqrt(np.sum(np.power(val_t-sol_t, 2))/np.sum(np.power(sol_t, 2)))
+        #     axes[1, count].set_title(f'$e_t(u^\\theta_{{{num}}}, {t_now})={round(err_t, 4)}$')
+        #     axes[1, count].legend(loc='upper right')
+        # plt.savefig(path + f'/{num}_sol.png')
+        # plt.close()

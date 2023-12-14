@@ -173,7 +173,7 @@ class Poisson2D1Peak:
         fig.savefig(path+f'/{num}_sol.png', dpi=300)
         plt.close(fig)
         # exact plot
-        if num == 0:
+        if num == 1:
             fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
             plot = ax.pcolormesh(mesh_x, mesh_y, exact.reshape(mesh_x.shape), shading='gouraud', cmap='jet', vmin=0, vmax=1)
             fig.colorbar(plot, ax=ax, format="%1.1e")
@@ -371,7 +371,7 @@ class Poisson2D9Peak:
         fig.savefig(path + f'/{num}_sol.png', dpi=300)
         plt.close(fig)
         # exact plot
-        if num == 0:
+        if num == 1:
             fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
             plot = ax.pcolormesh(mesh_x, mesh_y, exact.reshape(mesh_x.shape), shading='gouraud', cmap='jet', vmin=0, vmax=1)
             fig.colorbar(plot, ax=ax, format="%1.1e")
@@ -379,6 +379,126 @@ class Poisson2D9Peak:
             ax.set_ylabel('$y$')
             fig.savefig(path + f'/{num}_exact.png', dpi=300)
             plt.close(fig)
+
+
+class Poisson3D27Peak:
+    def __init__(self, dev, dtp, weight, xlim, ylim, zlim, num_in, num_bd, input_size, output_size):
+        self.dim, self.dev, self.dtp, self.weight, self.xlim, self.ylim, self.zlim, self.input_size, self.output_size = 3, dev, dtp, weight, xlim, ylim, zlim, input_size, output_size
+        self.criterion = torch.nn.MSELoss()
+        self.physics = ['in', 'bd']
+        self.size = {'in': num_in, 'bd': num_bd}
+        grid = np.array([-0.5, 0, 0.5])
+        x, y, z = np.meshgrid(grid, grid, grid)
+        self.center = np.stack([x.flatten(), y.flatten(), z.flatten()], axis=1)
+
+    def sample(self, size, mode):
+        xs, xe, ys, ye, zs, ze = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1], self.zlim[0], self.zlim[1]
+        x_len, y_len = xe - xs, ye-ys
+        if mode == 'in':
+            size_in = size
+            node_in = torch.cat(
+                (
+                    torch.rand([size_in, 1]) * t_len + torch.ones(size=[size_in, 1]) * ts,
+                    torch.rand([size_in, 1]) * x_len + torch.ones(size=[size_in, 1]) * xs,
+                    torch.rand([size_in, 1]) * z_len + torch.ones(size=[size_in, 1]) * ys,
+                ), dim=1)
+            return node_in.to(device=self.dev, dtype=self.dtp)
+        if mode == 'bd':
+            size_bd = size
+            bd_num = torch.randint(low=0, high=4, size=(size_bd,))
+            node_bd = list(range(4))
+            for i in range(4):
+                ind = bd_num[bd_num == i]
+                num = bd_num[ind].shape[0]
+                if i == 0:
+                    node_bd[i] = torch.cat([
+                        torch.rand([num, 1]) * t_len + torch.ones([num, 1]) * ts,
+                        torch.rand([num, 1]) * x_len + torch.ones([num, 1]) * xs,
+                        torch.ones([num, 1]) * ys], dim=1)
+                elif i == 1:
+                    node_bd[i] = torch.cat([
+                        torch.rand([num, 1]) * t_len + torch.ones([num, 1]) * ts,
+                        torch.ones([num, 1]) * xs,
+                        torch.rand([num, 1]) * z_len + torch.ones([num, 1]) * ys], dim=1)
+                elif i == 2:
+                    node_bd[i] = torch.cat([
+                        torch.rand([num, 1]) * t_len + torch.ones([num, 1]) * ts,
+                        torch.rand([num, 1]) * x_len + torch.ones([num, 1]) * xs,
+                        torch.ones([num, 1]) * ye], dim=1)
+                else:
+                    node_bd[i] = torch.cat([
+                        torch.rand([num, 1]) * t_len + torch.ones([num, 1]) * ts,
+                        torch.ones([num, 1]) * xe,
+                        torch.rand([num, 1]) * z_len + torch.ones([num, 1]) * ys], dim=1)
+            return torch.cat(node_bd, dim=0).to(device=self.dev, dtype=self.dtp)
+
+    def solve(self, mode, node):
+        if mode == 'in':
+            val_in = torch.zeros_like(node[:, 0])
+            for i in range(self.center.shape[0]):
+                val_in += (
+                        -(torch.exp(-1000 * (
+                                (node[:, 0] - self.center[i, 0]) ** 2 + (node[:, 1] - self.center[i, 1]) ** 2)
+                                    ) * (torch.pow((-2 * 1000) * (node[:, 0] - self.center[i, 0]), 2) + (-2 * 1000)))
+                        - (torch.exp(-1000 * (
+                                (node[:, 0] - self.center[i, 0]) ** 2 + (node[:, 1] - self.center[i, 1]) ** 2)
+                                    ) * (torch.pow((-2 * 1000) * (node[:, 1] - self.center[i, 1]), 2) + (-2 * 1000)))
+                        )
+            return val_in
+        elif mode == "bd":
+            val_bd = torch.zeros_like(node[:, 0])
+            for i in range(self.center.shape[0]):
+                val_bd += torch.exp(-1000 * (
+                        (node[:, 0] - self.center[i, 0]) ** 2 + (node[:, 1] - self.center[i, 1]) ** 2)
+                                    )
+            return val_bd
+        else:
+            raise ValueError('Invalid mode')
+
+    def residual(self, node, net, cls, mode):
+        pred = self.solve(mode=mode, node=node)
+        if mode == 'in':
+            x = node
+            x.requires_grad = True
+            d = torch.autograd.grad(outputs=net(x),
+                                    inputs=x,
+                                    grad_outputs=torch.ones_like(net(x)),
+                                    retain_graph=True,
+                                    create_graph=True)[0]
+            dx = d[:, 0].reshape(-1, 1)
+            dy = d[:, 1].reshape(-1, 1)
+            dxx = torch.autograd.grad(inputs=x,
+                                      outputs=dx,
+                                      grad_outputs=torch.ones_like(dx),
+                                      retain_graph=True,
+                                      create_graph=True)[0][:, 0].flatten()
+            dyy = torch.autograd.grad(dy, x,
+                                      grad_outputs=torch.ones_like(dy),
+                                      retain_graph=True,
+                                      create_graph=True)[0][:, 1].flatten()
+            if cls == 'loss':
+                pde_res = self.criterion(-dyy - dxx, pred)
+            elif cls == 'ele':
+                pde_res = -dyy - dxx - pred
+            else:
+                raise ValueError('Invalid cls')
+            return pde_res
+        elif mode == 'bd':
+            bd_res = self.criterion(net(node).flatten(), pred)
+            return bd_res
+        else:
+            raise ValueError('Invalid mode')
+
+    def grid(self, size):
+        xs, xe, ys, ye = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1]
+        inter_x = np.linspace(start=xs, stop=xe, num=size + 2)
+        inter_y = np.linspace(start=ys, stop=ye, num=size + 2)
+        mesh_x, mesh_y = np.meshgrid(inter_x, inter_y)
+        return mesh_x, mesh_y
+
+    def is_node_in(self, node):
+        return ((self.xlim[0] < node[:, 0]) & (node[:, 0] < self.xlim[1])
+                & (self.ylim[0] < node[:, 1]) & (node[:, 1] < self.ylim[1]))
 
 
 class Poisson2DLshape:
@@ -599,3 +719,5 @@ class Poisson2DLshape:
         ax[2].set_ylabel('$y$')
         plt.savefig(path + f'/{num}_sol.png', dpi=300)
         plt.close()
+
+

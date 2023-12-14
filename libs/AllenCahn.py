@@ -187,7 +187,7 @@ class AllenCahn2D:
         fig.savefig(path + f'/{num}_sol.png', dpi=300)
         plt.close(fig)
         # plot exact
-        if num == 0:
+        if num == 1:
             fig, axes = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
             plot = axes.pcolormesh(mesh_t, mesh_x, exact, shading='gouraud', cmap='jet', vmin=-1.05, vmax=1.05)
             fig.colorbar(plot, ax=axes, format="%1.1e")

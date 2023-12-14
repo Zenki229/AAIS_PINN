@@ -17,7 +17,7 @@ def main():
                         help='name of current saving folder in ./results, '
                              'default: "pde_name"+"domain_name"+"strategy_name"+debug')
     # pde setting
-    parser.add_argument('--pde', type=str, default='AllenCahn2D',
+    parser.add_argument('--pde', type=str, default='Burgers2D',
                         help='pde type: default is Poisson2D1Peak. Others please see in libs')
     # net and optimizer
     parser.add_argument('--NeuralShape', nargs='+', type=int, default=[20, 7],
@@ -84,8 +84,8 @@ def main():
         pde = AllenCahn2D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1],
                           **configs)
     elif 'KdV2D' in args.pde:
-        from libs.KdV import KdV1D
-        pde = KdV1D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1],
+        from libs.KdV import KdV2D
+        pde = KdV2D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1],
                     **configs)
     else:
         raise NotImplementedError

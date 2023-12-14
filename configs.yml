@@ -80,6 +80,14 @@ Poisson2D1Peak:
   output_size: 1
   weight: {'in': 1, 'bd': 1}
 
+Poisson3D27Peak:
+  xlim: [-1, 1]
+  ylim: [-1, 1]
+  zlim: [-1, 1]
+  input_size: 3
+  output_size: 1
+  weight: {'in': 1, 'bd': 1}
+
 Poisson2DLshape:
   xlim: [-1, 1]
   ylim: [-1, 1]
