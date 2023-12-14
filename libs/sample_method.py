@@ -40,7 +40,6 @@ class AAISGaussian:
         dim = self.dim
         ess_lad = self.ess_dict['ladder']
         ess_merge = self.ess_dict['merge']
-        del_ts = self.ess_dict['delete']
         ess_add = self.ess_dict['add']
         count_lad = self.count_dict['ladder']
         count_total = self.count_dict['total']
