@@ -128,27 +128,26 @@ class AllenCahn2D:
         mesh_t, mesh_x = self.grid(size=256)
         node = np.stack((mesh_t.flatten(), mesh_x.flatten()), axis=1)
         val = loss(node).reshape(mesh_t.shape)
-        if (IS_sign == 0) | (proposal is None):
-            fig, ax = plt.subplots(1, 2, layout='constrained', figsize=(12.8, 4.8))
-            # plot loss
-            plot = ax[0].pcolormesh(mesh_t, mesh_x, val, shading='gouraud', cmap='jet', vmin=0, vmax=np.max(val))
-            fig.colorbar(plot, ax=ax[0], format="%1.1e")
-            ax[0].set_title(f'Residual $\\mathcal{{Q}}_{{{num}}}$')
-            ax[0].set_xlabel('$t$')
-            ax[0].set_ylabel('$x$')
-            # plot node
-            ax[1].set_xlim(ts - (te - ts) * 0.05, te + (te - ts) * 0.15)
-            ax[1].set_ylim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
-            ax[1].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
-                          s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{{{num}}}$')
-            ax[1].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
-                          s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
-            ax[1].legend(loc='upper right')
-            ax[1].set_title('nodes')
-            ax[1].set_xlabel('$t$')
-            ax[1].set_ylabel('$x$')
-            plt.savefig(path + f'/{num}_loss.png', dpi=300)
-            plt.close()
+        fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
+        # plot loss
+        plot = ax[0].pcolormesh(mesh_t, mesh_x, val, shading='gouraud', cmap='jet', vmin=0, vmax=np.max(val))
+        fig.colorbar(plot, ax=ax[0], format="%1.1e")
+        ax[0].set_title(f'Residual $\\mathcal{{Q}}_{{{num}}}$')
+        ax[0].set_xlabel('$t$')
+        ax[0].set_ylabel('$x$')
+        # plot node
+        ax[1].set_xlim(ts - (te - ts) * 0.05, te + (te - ts) * 0.15)
+        ax[1].set_ylim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.15)
+        ax[1].scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.',
+                      s=np.ones_like(node_all[:, 0]), alpha=0.5, label=f'$\\mathcal{{S}}_{{{num}}}$')
+        ax[1].scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.',
+                      s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
+        ax[1].legend(loc='upper right')
+        ax[1].set_title('nodes')
+        ax[1].set_xlabel('$t$')
+        ax[1].set_ylabel('$x$')
+        plt.savefig(path + f'/{num}_loss.png', dpi=300)
+        plt.close()
         if proposal:
             val_prop = proposal(node).reshape(mesh_x.shape)
             fig, ax = plt.subplots(1, 3, layout='constrained', figsize=(19.2, 4.8))
