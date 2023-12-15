@@ -223,7 +223,7 @@ def run_train(net, pde, node, epoch, optimizer, lbfgs, log, file_path, loss_save
         if iter_count % 100 == 0:
             print(table)
         if iter_count % 200 == 0:
-            log.info(table)
+            log.debug(table)
         iter_count += 1
         return loss.item()
 
