@@ -62,13 +62,13 @@ class TrainResample:
             t2 = time.time() - t1
             log.info('=' * 3 + 'End sample time' + time.strftime("%H:%M:%S", time.gmtime(t2)) + '=' * 10)
             node['in'] = torch.cat((node['in'].detach(), node_loss), dim=0)
-            self.logger.info('=' * 3 + f'{count}-th Training with node shape {node["in"].shape[0]}' + '=' * 10)
+            self.logger.info('=' * 3 + f'{count+1}-th Training with node shape {node["in"].shape[0]}' + '=' * 10)
             t1 = time.time()
             rec, loss_save = run_train(self.net, self.pde, node, self.epoch, self.optimizer, self.lbfgs, self.logger, self.file_path, loss_save)
             t_train = time.time() - t1
             self.logger.info(
                 '=' * 3 + f'Train Done, time ' + time.strftime("%H:%M:%S", time.gmtime(t_train)) + '=' * 10)
-            with open(self.file_path + "/train" + f"/rec_{count}.pkl", "wb") as f:
+            with open(self.file_path + "/train" + f"/rec_{count+1}.pkl", "wb") as f:
                 pickle.dump(rec, f)
             for state in self.pde.physics:
                 if state == 'in':
@@ -240,11 +240,15 @@ def loss_err_plot(path_father):
     count = 1
     loss = {}
     err = {}
+    loss_iter = np.empty((0, 1))
+    err_iter = np.empty((0, 1))
     while os.path.exists(path_father+'/train'+f'/rec_{count}.pkl'):
         with open(path_father+'/train'+f'/rec_{count}.pkl', 'rb') as f:
             data = pickle.load(f)
             loss[f"{count}"] = np.array(data["loss"])
             err[f"{count}"] = np.array(data["err"])
+            err_iter = np.concatenate([err_iter, np.ones((1, 1))*err[f'{count}'][-1]], axis=0)
+            loss_iter = np.concatenate([loss_iter, np.ones((1, 1))*loss[f'{count}'][-1]], axis=0)
         count = count + 1
     # plot loss
     loss_all = np.concatenate(list(loss.values()))
@@ -260,7 +264,10 @@ def loss_err_plot(path_father):
     plt.savefig(path_father + '/img' + '/err_plot.jpg', dpi=150)
     plt.close()
     loss_err = np.stack([loss_all, err_all], axis=1)
+    loss_err_iter = np.stack([loss_iter, err_iter], axis=1)
     np.save(path_father+'/train'+'/loss_err.npy', loss_err)
+    np.save(path_father + '/train' + '/loss_err_iter.npy', loss_err_iter)
+
 
 
 def shape_ess_plot(path_father):
