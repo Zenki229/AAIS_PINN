@@ -319,13 +319,8 @@ def log_gen(path):
     logger.setLevel(logging.INFO)
     hdlr_f = logging.FileHandler(filename=path + '/logger.log', mode = 'w')
     hdlr_f.setLevel(logging.INFO)
-    hdlr_s = logging.StreamHandler()
-    hdlr_s.setLevel(logging.INFO)
-    fmt_s = logging.Formatter(fmt="%(message)s")
     fmt_f = logging.Formatter(fmt="%(asctime)s - %(name)s - %(levelname)-9s - %(filename)-8s : %(lineno)s line - %(message)s", datefmt="%Y/%m/%d %H:%M:%S")
-    hdlr_s.setFormatter(fmt_s)
     hdlr_f.setFormatter(fmt_f)
-    logger.addHandler(hdlr_s)
     logger.addHandler(hdlr_f)
     return logger
 
