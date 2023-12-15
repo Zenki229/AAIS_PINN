@@ -284,11 +284,11 @@ def shape_ess_plot(path_father):
 
 if __name__ == "__main__":
     # path = input("input path_father:")
-    # loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_AAIS_g_resample_19076082_500e-pp1")
-    # loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_AAIS_g_add_19076082_500e-pp1")
-    # loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_AAIS_g_resample_19076082_1000e-pp1")
-    # loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_AAIS_g_add_19076082_1000e-pp1")
-    shape_ess_plot("../results/Burgers2D/Burgers2D_AAIS_t_resample_500e")
-    shape_ess_plot("../results/Burgers2D/Burgers2D_AAIS_g_resample_500e")
+    loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_AAIS_g_resample_500e")
+    loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_AAIS_t_resample_500e")
+    loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_RAD_resample_500e")
+    loss_err_plot("../results/Poisson2D1Peak/Poisson2D1Peak_Uni_resample_500e")
+    # shape_ess_plot("../results/Burgers2D/Burgers2D_AAIS_t_resample_500e")
+    # shape_ess_plot("../results/Burgers2D/Burgers2D_AAIS_g_resample_500e")
     # shape_ess_plot("../results/Burgers1D_v1Uni_resample_1116-aft-1")
 
