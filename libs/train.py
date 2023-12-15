@@ -46,7 +46,7 @@ class TrainResample:
         with open(self.file_path + "/train" + f"/rec_0.pkl", "wb") as f:
             pickle.dump(rec, f)
         self.pde.test_err_plot(self.net, self.file_path + '/test', 'pre')
-        for count in range(100):
+        for count in range(self.max_iter):
             node_search = self.pde.sample(self.num_search, 'in').detach().cpu().numpy()
             node = node_domain.copy()
             log.info('=' * 3 + f'{count}-th ' + f'{self.sample_method.__class__.__name__}' + f' with num {node_search.shape[0]}' + '=' * 10)
