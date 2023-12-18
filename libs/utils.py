@@ -316,7 +316,7 @@ def load_yaml(filename, key=None):
 
 def log_gen(path):
     logger = logging.getLogger('logger')
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     hdlr_f = logging.FileHandler(filename=path + '/logger.log', mode = 'w')
     hdlr_f.setLevel(logging.DEBUG)
     hdlr_s = logging.StreamHandler()

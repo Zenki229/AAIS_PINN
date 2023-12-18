@@ -237,7 +237,7 @@ def run_train(net, pde, node, epoch, optimizer, lbfgs, log, file_path, loss_save
 
 
 def loss_err_plot(path_father):
-    count = 1
+    count = 0
     loss = {}
     err = {}
     loss_iter = np.empty((0, 1))
