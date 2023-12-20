@@ -17,7 +17,7 @@ def main():
                         help='name of current saving folder in ./results, '
                              'default: "pde_name"+"domain_name"+"strategy_name"+debug')
     # pde setting
-    parser.add_argument('--pde', type=str, default='Poisson3D27Peak',
+    parser.add_argument('--pde', type=str, default='Wave3D',
                         help='pde type: default is Poisson2D1Peak. Others please see in libs')
     # net and optimizer
     parser.add_argument('--NeuralShape', nargs='+', type=int, default=[20, 7],
@@ -90,6 +90,10 @@ def main():
         from libs.KdV import KdV2D
         pde = KdV2D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1],
                     **configs)
+    elif 'Wave3D' in args.pde:
+        from libs.Wave import Wave3D
+        pde = Wave3D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1],
+                     **configs)
     else:
         raise NotImplementedError
     net = DeepNeuralNet(input_size=pde.input_size,

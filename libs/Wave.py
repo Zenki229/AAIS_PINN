@@ -1,7 +1,9 @@
+import torch
+
 from .utils import *
 
 
-class Wave2D:
+class Wave3D:
 
     def __init__(self,  dev, dtp, weight,
                  xlim, tlim, ylim,  num_in, num_bd, input_size, output_size):
@@ -84,7 +86,9 @@ class Wave2D:
             return val_bd
         elif mode == "init":
             PI = np.pi
-            return (torch.sin(2 * PI * node[:, 1]) * torch.sin(2 * PI * node[:, 2]) * torch.cos(4*PI*node[:, 0]))
+            u = torch.sin(2 * PI * node[:, 1]) * torch.sin(2 * PI * node[:, 2]) * torch.cos(4*PI*node[:, 0])
+            du = -4*PI*torch.sin(2 * PI * node[:, 1]) * torch.sin(2 * PI * node[:, 2]) * torch.sin(4*PI*node[:, 0])
+            return torch.stack([u, du],dim = 1)
 
         else:
             raise ValueError("invalid mode")
@@ -141,8 +145,16 @@ class Wave2D:
             bd_res = self.criterion(net(node_bd).flatten(), pred)
             return bd_res
         elif mode == "init":
-            node_init = node
-            init_res = self.criterion(net(node_init).flatten(), pred)
+            x = node
+            x.requires_grad = True
+            val = net(x)
+            d = torch.autograd.grad(outputs=val,
+                                    inputs=x,
+                                    grad_outputs=torch.ones_like(val),
+                                    retain_graph=True,
+                                    create_graph=True)[0]
+            dt = d[:, 0].reshape(-1, 1)
+            init_res = self.criterion(val.flatten(), pred[:, 0]) + self.criterion(dt.flatten(), pred[:, 1])
             return init_res
         else:
             raise ValueError("Invalid mode")
@@ -263,40 +275,41 @@ class Wave2D:
         val = net(torch.from_numpy(node).to(device=self.dev)).detach().cpu().numpy().flatten()
         err = np.sqrt(np.sum(np.power(val - sol, 2)) / np.sum(np.power(sol, 2)))
         err_plt = val-sol
-        self.plot_vol(node, err_plt, f'relative error {round(err,6)}', path+f'/{num}_err.png')
+        self.plot_vol(node, err_plt, f'$e_r(u_{{{num}}}(\\cdot;\\theta))={round(err, 4)}$', path+f'/{num}_err.png')
         self.plot_vol(node, val, None, path + f'/{num}_net.png')
         # plot exact
         if num == 0:
             self.plot_vol(node, sol.flatten(), None, path+f'/exact.png')
         # plot at t
-        fig, axes = plt.subplots(4, 3, figsize=(12.8, 12.8))
-        fig.suptitle(f'relative error {round(err, 6)}')
-        t_plt = [0.00, 0.25, 0.75, 1.00]
-        mesh_x, mesh_y = np.meshgrid(
-            np.linspace(self.xlim[0], self.xlim[1], 100),
-            np.linspace(self.ylim[0], self.ylim[1], 100)
-        )
-        for enum, t_now in enumerate(t_plt):
-            node = np.stack((np.ones_like(mesh_x.flatten()) * t_now, mesh_x.flatten(), mesh_y.flatten()), axis=1)
-            node_aux = torch.from_numpy(node).to(device=self.dev)
-            val_t = net(node_aux).detach().cpu().numpy().flatten()
-            exact_t = self.exact(node).flatten()
-            err_t = np.sqrt(np.sum(np.power(val_t - exact_t, 2)) / np.sum(np.power(exact_t, 2)))
-            err_t_plt = np.abs(val_t-exact_t)
-            plot = axes[enum, 0].pcolormesh(mesh_x, mesh_y, val_t.reshape(mesh_x.shape), shading='gouraud', cmap='jet')
-            axes[enum, 0].set_title(f'time {t_now}')
-            fig.colorbar(plot, ax=axes[enum, 0], format="%1.1e")
-            plot = axes[enum, 1].pcolormesh(mesh_x, mesh_y, exact_t.reshape(mesh_x.shape), shading='gouraud', cmap='jet')
-            axes[enum, 1].set_title(f'exact')
-            fig.colorbar(plot, ax=axes[enum,1], format="%1.1e")
-            plot = axes[enum, 2].pcolormesh(mesh_x, mesh_y, err_t_plt.reshape(mesh_x.shape), shading='gouraud', cmap='jet')
-            axes[enum, 2].set_title(f'RE {round(err_t, 6)}')
-            fig.colorbar(plot, ax=axes[enum,2], format="%1.1e")
-        fig.tight_layout()
-        fig.savefig(path + f'/{num}_slice.png')
-        plt.close(fig)
+        # fig, axes = plt.subplots(4, 3, figsize=(12.8, 12.8))
+        # fig.suptitle(f'relative error {round(err, 6)}')
+        # t_plt = [0.00, 0.25, 0.75, 1.00]
+        # mesh_x, mesh_y = np.meshgrid(
+        #     np.linspace(self.xlim[0], self.xlim[1], 100),
+        #     np.linspace(self.ylim[0], self.ylim[1], 100)
+        # )
+        # for enum, t_now in enumerate(t_plt):
+        #     node = np.stack((np.ones_like(mesh_x.flatten()) * t_now, mesh_x.flatten(), mesh_y.flatten()), axis=1)
+        #     node_aux = torch.from_numpy(node).to(device=self.dev)
+        #     val_t = net(node_aux).detach().cpu().numpy().flatten()
+        #     exact_t = self.exact(node).flatten()
+        #     err_t = np.sqrt(np.sum(np.power(val_t - exact_t, 2)) / np.sum(np.power(exact_t, 2)))
+        #     err_t_plt = np.abs(val_t-exact_t)
+        #     plot = axes[enum, 0].pcolormesh(mesh_x, mesh_y, val_t.reshape(mesh_x.shape), shading='gouraud', cmap='jet')
+        #     axes[enum, 0].set_title(f'time {t_now}')
+        #     fig.colorbar(plot, ax=axes[enum, 0], format="%1.1e")
+        #     plot = axes[enum, 1].pcolormesh(mesh_x, mesh_y, exact_t.reshape(mesh_x.shape), shading='gouraud', cmap='jet')
+        #     axes[enum, 1].set_title(f'exact')
+        #     fig.colorbar(plot, ax=axes[enum,1], format="%1.1e")
+        #     plot = axes[enum, 2].pcolormesh(mesh_x, mesh_y, err_t_plt.reshape(mesh_x.shape), shading='gouraud', cmap='jet')
+        #     axes[enum, 2].set_title(f'RE {round(err_t, 6)}')
+        #     fig.colorbar(plot, ax=axes[enum,2], format="%1.1e")
+        # fig.tight_layout()
+        # fig.savefig(path + f'/{num}_slice.png')
+        # plt.close(fig)
 
-    def plot_vol(self, node, val, title, fname):
+    @staticmethod
+    def plot_vol(node, val, title, fname):
         fig = go.Figure(data=go.Volume(
             x=node[:, 1],
             y=node[:, 2],
@@ -305,7 +318,7 @@ class Wave2D:
             isomin=np.min(val),
             isomax=np.max(val),
             opacity=0.1,  # needs to be small to see through all surfaces
-            surface_count=21,  # needs to be a large number for good volume rendering
+            surface_count=21,  # needs to be a large number for good volume renderingNone
             colorscale='jet'
         ))
         camera = dict(
@@ -316,13 +329,16 @@ class Wave2D:
         fig.update_layout(
             title=dict(text=title, x=0.5, y=0.9, xanchor='center', yanchor='top'),
             scene=dict(
-            xaxis=dict(title='x'),
-            yaxis=dict(title='y'),
-            zaxis=dict(title='t'),
-        ),
+                xaxis=dict(title='x'),
+                yaxis=dict(title='y'),
+                zaxis=dict(title='t'),
+            ),
             scene_camera=camera,
             width=640,
             height=480,
             margin=dict(l=20, r=20, b=50, t=20))
         fig.update_traces(colorbar=dict(tickformat='.1e'))
-        fig.write_image(fname)
+        if 'html' in fname:
+            fig.write_html(fname, include_mathjax='cdn')
+        else:
+            fig.write_image(fname)

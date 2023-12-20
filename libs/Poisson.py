@@ -611,7 +611,7 @@ class Poisson3D27Peak:
         if 'html' in fname:
             fig.write_html(fname, include_mathjax='cdn')
         else:
-            fig.write_image(fname, include_mathjax='cdn')
+            fig.write_image(fname)
 
 
 class Poisson2DLshape:
