@@ -557,7 +557,7 @@ class Poisson3D27Peak:
             width=640,
             height=480,
             margin=dict(l=20, r=20, b=50, t=20))
-        fig.write_html(path+f'/{num}_node.png')
+        fig.write_image(path+f'/{num}_node.png')
         if proposal:
             # plot proposal
             val = proposal(node).flatten()
