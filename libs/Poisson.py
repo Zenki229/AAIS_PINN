@@ -543,7 +543,7 @@ class Poisson3D27Peak:
             eye=dict(x=1.35 / 1.1, y=-1.95 / 1.1, z=1.45 / 1.1)
         )
         # plot loss
-        self.plot_vol(node, val, None, path + f'/{num}_loss.html')
+        self.plot_vol(node, val, None, path + f'/{num}_loss.png')
         # plot node
         fig = go.Figure()
         fig.add_trace(go.Scatter3d(name='before', x=node_all[:, 1], y=node_all[:, 2], z=node_all[:, 0], mode='markers', marker=dict(size=1, opacity=0.05, color='blue')))
@@ -557,11 +557,11 @@ class Poisson3D27Peak:
             width=640,
             height=480,
             margin=dict(l=20, r=20, b=50, t=20))
-        fig.write_html(path+f'/{num}_node.html')
+        fig.write_html(path+f'/{num}_node.png')
         if proposal:
             # plot proposal
             val = proposal(node).flatten()
-            self.plot_vol(node, val, None, path + f'/{num}_proposal.html')
+            self.plot_vol(node, val, None, path + f'/{num}_proposal.png')
 
     def test_err_plot(self, net, path, num):
         mesh_x, mesh_y, mesh_z = self.grid(50)
@@ -573,10 +573,10 @@ class Poisson3D27Peak:
         # plot absolute error
         self.plot_vol(node, err_plt, f'$e_r(u_{{{num}}}(\\cdot;\\theta))={round(err, 4)}$', path + f'/{num}_abs.html')
         # plot solution
-        self.plot_vol(node, val, None, path + f'/{num}_sol.html')
+        self.plot_vol(node, val, None, path + f'/{num}_sol.png')
         # plot exact
         if num == 1:
-            self.plot_vol(node, sol.flatten(), None, path + f'/exact.html')
+            self.plot_vol(node, sol.flatten(), None, path + f'/exact.png')
 
     @staticmethod
     def plot_vol(node, val, title, fname):

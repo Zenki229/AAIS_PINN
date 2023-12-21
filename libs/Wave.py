@@ -87,8 +87,8 @@ class Wave3D:
         elif mode == "init":
             PI = np.pi
             u = torch.sin(2 * PI * node[:, 1]) * torch.sin(2 * PI * node[:, 2]) * torch.cos(4*PI*node[:, 0])
-            du = -4*PI*torch.sin(2 * PI * node[:, 1]) * torch.sin(2 * PI * node[:, 2]) * torch.sin(4*PI*node[:, 0])
-            return torch.stack([u, du],dim = 1)
+            du = torch.zeros_like(u)
+            return torch.stack([u, du], dim=1)
 
         else:
             raise ValueError("invalid mode")
@@ -220,7 +220,7 @@ class Wave3D:
             margin=dict(l=20, r=20, b=50, t=20))
         fig.write_image(fname)
 
-    def target_node_plot_together(self, loss, node_add, node_domain, IS_sign, proposal, path, num):
+    def target_node_plot_together(self, loss, node_add, node_domain, proposal, path, num):
         node_all = torch.cat([node_domain['in'].detach(),
                               node_domain['bd'].detach(),
                               node_domain['init'].detach()])
@@ -263,7 +263,7 @@ class Wave3D:
             height=480,
             margin=dict(l=20, r=20, b=50, t=20))
         fig.write_image(path+f'/{num}_node.png')
-        if IS_sign == 1:
+        if proposal:
             # plot proposal
             val = proposal(node).flatten()
             self.plot_vol(node, val, None, path + f'/{num}_proposal.png')
@@ -275,10 +275,10 @@ class Wave3D:
         val = net(torch.from_numpy(node).to(device=self.dev)).detach().cpu().numpy().flatten()
         err = np.sqrt(np.sum(np.power(val - sol, 2)) / np.sum(np.power(sol, 2)))
         err_plt = val-sol
-        self.plot_vol(node, err_plt, f'$e_r(u_{{{num}}}(\\cdot;\\theta))={round(err, 4)}$', path+f'/{num}_err.png')
-        self.plot_vol(node, val, None, path + f'/{num}_net.png')
+        self.plot_vol(node, err_plt, f'$e_r(u_{{{num}}}(\\cdot;\\theta))={round(err, 4)}$', path+f'/{num}_abs.png')
+        self.plot_vol(node, val, None, path + f'/{num}_sol.png')
         # plot exact
-        if num == 0:
+        if num == 1:
             self.plot_vol(node, sol.flatten(), None, path+f'/exact.png')
         # plot at t
         # fig, axes = plt.subplots(4, 3, figsize=(12.8, 12.8))
