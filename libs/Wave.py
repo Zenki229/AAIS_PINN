@@ -227,7 +227,7 @@ class Wave3D:
         node_add = node_add.detach().cpu().numpy()
         node_all = node_all.cpu().numpy()
         ts, te, xs, xe, ys, ye = self.tlim[0], self.tlim[1], self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1]
-        mesh_t, mesh_x, mesh_y = self.grid(size=30)
+        mesh_t, mesh_x, mesh_y = self.grid(size=50)
         node = np.stack([mesh_t.flatten(), mesh_x.flatten(), mesh_y.flatten()], axis=1)
         val = loss(node).flatten()
         camera = dict(
