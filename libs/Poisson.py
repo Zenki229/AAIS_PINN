@@ -546,7 +546,7 @@ class Poisson3D27Peak:
         self.plot_vol(node, val, None, path + f'/{num}_loss.png')
         # plot node
         fig = go.Figure()
-        fig.add_trace(go.Scatter3d(name=f'$\\S_{{{num}}}$', x=node_all[:, 1], y=node_all[:, 2], z=node_all[:, 0], mode='markers', marker=dict(size=1, opacity=0.3, color='blue')))
+        fig.add_trace(go.Scatter3d(name=f'$\\mathcal{{S}}_{{{num}}}$', x=node_all[:, 1], y=node_all[:, 2], z=node_all[:, 0], mode='markers', marker=dict(size=1, opacity=0.08, color='blue')))
         fig.add_trace(go.Scatter3d(name='$\\mathcal{D}$', x=node_add[:, 1], y=node_add[:, 2], z=node_add[:, 0], mode='markers', marker=dict(size=1, opacity=1.0, color='red')))
         fig.update_layout(scene=dict(
             xaxis=dict(range=[xs, xe], title='x'),
