@@ -571,7 +571,7 @@ class Poisson3D27Peak:
         err = np.sqrt(np.sum(np.power(val - sol, 2)) / np.sum(np.power(sol, 2)))
         err_plt = val - sol
         # plot absolute error
-        self.plot_vol(node, err_plt, f'$e_r(u_{{{num}}}(\\cdot;\\theta))={round(err, 4)}$', path + f'/{num}_abs.html')
+        self.plot_vol(node, err_plt, f'$e_r(u_{{{num}}}(\\cdot;\\theta))={round(err, 4)}$', path + f'/{num}_abs.png')
         # plot solution
         self.plot_vol(node, val, None, path + f'/{num}_sol.png')
         # plot exact
