@@ -388,8 +388,10 @@ class Poisson3D27Peak:
         self.physics = ['in', 'bd']
         self.size = {'in': num_in, 'bd': num_bd}
         grid = np.array([-0.5, 0, 0.5])
-        x, y, z = np.meshgrid(grid, grid, grid)
+        grid2 = np.array([-0.5, 0.5])
+        x, y, z = np.meshgrid(grid, grid2, grid2)
         self.center = np.stack([x.flatten(), y.flatten(), z.flatten()], axis=1)
+        self.K = 1000
 
     def sample(self, size, mode):
         xs, xe, ys, ye, zs, ze = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1], self.zlim[0], self.zlim[1]
@@ -446,15 +448,15 @@ class Poisson3D27Peak:
         if mode == 'in':
             val_in = torch.zeros_like(node[:, 0])
             for i in range(self.center.shape[0]):
-                val_in += -torch.exp(-1000 * ((node[:, 0] - self.center[i, 0]) ** 2 + (node[:, 1] - self.center[i, 1]) ** 2 + (node[:, 2] - self.center[i, 2]) ** 2)) * (
-                        torch.pow((-2 * 1000) * (node[:, 0] - self.center[i, 0]), 2) + (-2 * 1000)
-                      + torch.pow((-2 * 1000) * (node[:, 1] - self.center[i, 1]), 2) + (-2 * 1000)
-                      + torch.pow((-2 * 1000) * (node[:, 2] - self.center[i, 2]), 2) + (-2 * 1000))
+                val_in += -torch.exp(-self.K * ((node[:, 0] - self.center[i, 0]) ** 2 + (node[:, 1] - self.center[i, 1]) ** 2 + (node[:, 2] - self.center[i, 2]) ** 2)) * (
+                        torch.pow((-2 * self.K) * (node[:, 0] - self.center[i, 0]), 2) + (-2 * self.K)
+                      + torch.pow((-2 * self.K) * (node[:, 1] - self.center[i, 1]), 2) + (-2 * self.K)
+                      + torch.pow((-2 * self.K) * (node[:, 2] - self.center[i, 2]), 2) + (-2 * self.K))
             return val_in
         elif mode == "bd":
             val_bd = torch.zeros_like(node[:, 0])
             for i in range(self.center.shape[0]):
-                val_bd += torch.exp(-1000 * (
+                val_bd += torch.exp(-self.K * (
                         (node[:, 0] - self.center[i, 0]) ** 2 + (node[:, 1] - self.center[i, 1]) ** 2 + (node[:, 2] - self.center[i, 2]) ** 2)
                                     )
             return val_bd
@@ -516,7 +518,7 @@ class Poisson3D27Peak:
     def exact(self, node):
         exact = np.zeros_like(node[:, 0])
         for i in range(self.center.shape[0]):
-            exact += np.exp(-1000 * ((node[:, 0] - self.center[i, 0]) ** 2 + (node[:, 1] - self.center[i, 1]) ** 2 + (node[:, 2] - self.center[i, 2]) ** 2))
+            exact += np.exp(-self.K * ((node[:, 0] - self.center[i, 0]) ** 2 + (node[:, 1] - self.center[i, 1]) ** 2 + (node[:, 2] - self.center[i, 2]) ** 2))
         return exact
 
     def test_err(self, net):
