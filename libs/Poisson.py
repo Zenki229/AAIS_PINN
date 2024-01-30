@@ -381,17 +381,18 @@ class Poisson2D9Peak:
             plt.close(fig)
 
 
-class Poisson3D27Peak:
+class Poisson3DPeaks:
     def __init__(self, dev, dtp, weight, xlim, ylim, zlim, num_in, num_bd, input_size, output_size):
         self.dim, self.dev, self.dtp, self.weight, self.xlim, self.ylim, self.zlim, self.input_size, self.output_size = 3, dev, dtp, weight, xlim, ylim, zlim, input_size, output_size
         self.criterion = torch.nn.MSELoss()
         self.physics = ['in', 'bd']
         self.size = {'in': num_in, 'bd': num_bd}
-        grid = np.array([-0.5, 0, 0.5])
-        grid2 = np.array([-0.5, 0.5])
-        x, y, z = np.meshgrid(grid, grid2, grid2)
-        self.center = np.stack([x.flatten(), y.flatten(), z.flatten()], axis=1)
-        self.K = 1000
+        # grid = np.array([-0.5, 0, 0.5])
+        # grid2 = np.array([-0.5, 0.5])
+        # x, y, z = np.meshgrid(grid, grid2, grid2)
+        # self.center = np.stack([x.flatten(), y.flatten(), z.flatten()], axis=1)
+        self.K = 500
+        self.center = np.array([[-0.75,-0.75,-0.75], [-0.25,-0.25,-0.25]])
 
     def sample(self, size, mode):
         xs, xe, ys, ye, zs, ze = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1], self.zlim[0], self.zlim[1]
