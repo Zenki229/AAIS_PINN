@@ -73,9 +73,12 @@ def main():
     elif 'Poisson2D9Peak' in args.pde:
         from libs.Poisson import Poisson2D9Peak
         pde = Poisson2D9Peak(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1], **configs)
-    elif 'Poisson3D27Peak' in args.pde:
-        from libs.Poisson import Poisson3D27Peak
-        pde = Poisson3D27Peak(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1], **configs)
+    elif 'Poisson3DPeaks' in args.pde:
+        from libs.Poisson import Poisson3DPeaks
+        pde = Poisson3DPeaks(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1], **configs)
+    elif 'Poisson9DPeaks' in args.pde:
+        from libs.Poisson import Poisson9DPeaks
+        pde = Poisson9DPeaks(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1], **configs)
     elif 'Poisson2DLshape' in args.pde:
         from libs.Poisson import Poisson2DLshape
         pde = Poisson2DLshape(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1], **configs)

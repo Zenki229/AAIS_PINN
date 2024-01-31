@@ -88,6 +88,13 @@ Poisson3DPeaks:
   output_size: 1
   weight: {'in': 1, 'bd': 1}
 
+
+Poisson9DPeaks:
+  axeslim: [[-1, 1],[-1, 1],[-1, 1],[-1, 1],[-1, 1],[-1, 1],[-1, 1],[-1, 1],[-1, 1]]
+  input_size: 3
+  output_size: 1
+  weight: {'in': 1, 'bd': 1}
+
 Poisson2DLshape:
   xlim: [-1, 1]
   ylim: [-1, 1]
