@@ -17,7 +17,7 @@ def main():
                         help='name of current saving folder in ./results, '
                              'default: "pde_name"+"domain_name"+"strategy_name"+debug')
     # pde setting
-    parser.add_argument('--pde', type=str, default='Wave3D',
+    parser.add_argument('--pde', type=str, default='Poisson9DPeaks',
                         help='pde type: default is Poisson2D1Peak. Others please see in libs')
     # net and optimizer
     parser.add_argument('--NeuralShape', nargs='+', type=int, default=[20, 7],
