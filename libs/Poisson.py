@@ -749,7 +749,10 @@ class Poisson9DPeaks:
         return mesh_x, mesh_y
 
     def is_node_in(self, node):
-        return all(self.axeslim[i, 0] < node[:, i] < self.axeslim[i, 1] for i in range(self.dim))
+        aux = torch.full_like(node[:, 0], True)
+        for i in range(self.dim):
+            aux = aux & (self.axeslim[i, 0]<node[:, i]) & (node[:, i]<self.axeslim[i, 1])
+        return aux
 
     def exact(self, node):
         node_exp = np.zeros_like(node[:, 0])
