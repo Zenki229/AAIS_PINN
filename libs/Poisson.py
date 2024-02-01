@@ -646,7 +646,7 @@ class Poisson3DPeaks:
 
 class Poisson9DPeaks:
     def __init__(self, dev, dtp, weight, axeslim, num_in, num_bd, input_size, output_size):
-        self.dim, self.dev, self.dtp, self.weight, self.axeslim, self.input_size, self.output_size = 3, dev, dtp, weight, np.array(axeslim), input_size, output_size
+        self.dim, self.dev, self.dtp, self.weight, self.axeslim, self.input_size, self.output_size = 9, dev, dtp, weight, np.array(axeslim), input_size, output_size
         self.criterion = torch.nn.MSELoss()
         self.physics = ['in', 'bd']
         self.size = {'in': num_in, 'bd': num_bd}
@@ -688,23 +688,20 @@ class Poisson9DPeaks:
         if mode == 'in':
             val_in = torch.zeros_like(node[:, 0])
             node_exp = torch.zeros_like(node[:, 0])
-            for i in range(self.center.shape[0]):
-                val_aux = torch.ones_like(node[:, 0])
-                for j in range(self.dim):
-                    val_aux *= torch.exp(-self.K*(torch.pow((node[:, j]-self.center[j]), 2)))
-                node_exp += val_aux
-            for i in range(self.center.shape[0]):
-                for j in range(self.dim):
-                    val_in += -node_exp * (
+            val_aux = torch.ones_like(node[:, 0])
+            for j in range(self.dim):
+                val_aux *= torch.exp(-self.K*(torch.pow((node[:, j]-self.center[j]), 2)))
+            node_exp += val_aux
+            for j in range(self.dim):
+                val_in += -node_exp * (
                         torch.pow((-2 * self.K) * (node[:, j] - self.center[j]), 2) + (-2 * self.K))
             return val_in
         elif mode == "bd":
             node_exp = torch.zeros_like(node[:, 0])
-            for i in range(self.center.shape[0]):
-                val_aux = torch.ones_like(node[:, 0])
-                for j in range(self.dim):
-                    val_aux *= torch.exp(-self.K * (torch.pow((node[:, j] - self.center[j]), 2)))
-                node_exp += val_aux
+            val_aux = torch.ones_like(node[:, 0])
+            for j in range(self.dim):
+                val_aux *= torch.exp(-self.K * (torch.pow((node[:, j] - self.center[j]), 2)))
+            node_exp += val_aux
             return node_exp
         else:
             raise ValueError('Invalid mode')
@@ -758,18 +755,16 @@ class Poisson9DPeaks:
         
     def exact(self, node):
         node_exp = np.zeros_like(node[:, 0])
-        for i in range(self.center.shape[0]):
-            val_aux = np.ones_like(node[:, 0])
-            for j in range(self.dim):
-                val_aux *= np.exp(-self.K * (np.power((node[:, j] - self.center[j]), 2)))
-            node_exp += val_aux
+        val_aux = np.ones_like(node[:, 0])
+        for j in range(self.dim):
+            val_aux *= np.exp(-self.K * (np.power((node[:, j] - self.center[j]), 2)))
+        node_exp += val_aux
         return node_exp
 
     def test_err(self, net):
-        node = self.sample(10000, 'in').detach().cpu().numpy()
-        for i in range(self.center.shape[0]):
-            node_aux = ss.multivariate_normal.rvs(mean=self.center, cov=np.diag(np.ones((self.dim,))*(1/(self.K*2))), size=1000)
-            node = np.concatenate([node, node_aux], axis=0)
+        node = self.sample(15000, 'in').detach().cpu().numpy()
+        node_aux = ss.multivariate_normal.rvs(mean=self.center, cov=np.diag(np.ones((self.dim,))*(1/(self.K*2))), size=5000)
+        node = np.concatenate([node, node_aux], axis=0)
         node_aux = torch.from_numpy(node).to(device=self.dev)
         val = net(node_aux).detach().cpu().numpy().flatten()
         exact = self.exact(node)
@@ -849,7 +844,7 @@ class Poisson9DPeaks:
         fig.savefig(path + f'/{num}_sol.png', dpi=300)
         plt.close(fig)
         # exact plot
-        if num == 0:
+        if num == 1:
             fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
             plot = ax.pcolormesh(mesh_x, mesh_y, exact.reshape(mesh_x.shape), shading='gouraud', cmap='jet', vmin=0, vmax=1)
             fig.colorbar(plot, ax=ax, format="%1.1e")
