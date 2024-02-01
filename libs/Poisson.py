@@ -391,8 +391,9 @@ class Poisson3DPeaks:
         # grid2 = np.array([-0.5, 0.5])
         # x, y, z = np.meshgrid(grid, grid2, grid2)
         # self.center = np.stack([x.flatten(), y.flatten(), z.flatten()], axis=1)
-        self.K = 500
-        self.center = np.array([[-0.5, -0.5, -0.5], [0, 0, 0.55]])
+        self.K = 50
+        self.center = np.array([[0, 0, 0]])
+
 
     def sample(self, size, mode):
         xs, xe, ys, ye, zs, ze = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1], self.zlim[0], self.zlim[1]
@@ -645,7 +646,7 @@ class Poisson3DPeaks:
 
 class Poisson9DPeaks:
     def __init__(self, dev, dtp, weight, axeslim, num_in, num_bd, input_size, output_size):
-        self.dim, self.dev, self.dtp, self.weight, self.axeslim, self.input_size, self.output_size = 9, dev, dtp, weight, np.array(axeslim), input_size, output_size
+        self.dim, self.dev, self.dtp, self.weight, self.axeslim, self.input_size, self.output_size = 3, dev, dtp, weight, np.array(axeslim), input_size, output_size
         self.criterion = torch.nn.MSELoss()
         self.physics = ['in', 'bd']
         self.size = {'in': num_in, 'bd': num_bd}
@@ -654,7 +655,7 @@ class Poisson9DPeaks:
         # x, y, z = np.meshgrid(grid, grid2, grid2)
         # self.center = np.stack([x.flatten(), y.flatten(), z.flatten()], axis=1)
         self.K = 10
-        self.center = np.zeros((9, ))
+        self.center = np.zeros((self.dim, ))
 
     def sample(self, size, mode):
         if mode == 'in':
@@ -749,11 +750,12 @@ class Poisson9DPeaks:
         return mesh_x, mesh_y
 
     def is_node_in(self, node):
-        aux = torch.full_like(node[:, 0], True)
+        node_aux = node.detach().cpu().numpy()
+        aux = np.full(node_aux[:, 0].shape, True)
         for i in range(self.dim):
-            aux = aux & (self.axeslim[i, 0]<node[:, i]) & (node[:, i]<self.axeslim[i, 1])
-        return aux
-
+            aux = aux & (self.axeslim[i, 0]<node_aux[:, i]) & (node_aux[:, i]<self.axeslim[i, 1])
+        return torch.from_numpy(aux).to(device=self.dev)
+        
     def exact(self, node):
         node_exp = np.zeros_like(node[:, 0])
         for i in range(self.center.shape[0]):
@@ -764,7 +766,7 @@ class Poisson9DPeaks:
         return node_exp
 
     def test_err(self, net):
-        node = self.sample(10000, 'in')
+        node = self.sample(10000, 'in').detach().cpu().numpy()
         for i in range(self.center.shape[0]):
             node_aux = ss.multivariate_normal.rvs(mean=self.center, cov=np.diag(np.ones((self.dim,))*(1/(self.K*2))), size=1000)
             node = np.concatenate([node, node_aux], axis=0)
