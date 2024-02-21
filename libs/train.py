@@ -27,7 +27,7 @@ class TrainResample:
         def target(node_cpu):
             # node:cpu
             node_gpu = torch.from_numpy(node_cpu).to(device=self.dev)
-            return np.where(self.pde.is_node_in(node_gpu).detach().cpu().numpy(),
+            return np.where(self.pde.is_node_in(node_cpu),
                             torch.pow(input=self.pde.residual(node=node_gpu, net=self.net, cls="ele", mode="in"), exponent=2).detach().cpu().numpy(), 0)
         ess = np.zeros((0, 1))
         shape = np.zeros((0, 1))

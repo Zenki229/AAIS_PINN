@@ -387,12 +387,13 @@ class Poisson3DPeaks:
         self.criterion = torch.nn.MSELoss()
         self.physics = ['in', 'bd']
         self.size = {'in': num_in, 'bd': num_bd}
-        # grid = np.array([-0.5, 0, 0.5])
-        # grid2 = np.array([-0.5, 0.5])
-        # x, y, z = np.meshgrid(grid, grid2, grid2)
-        # self.center = np.stack([x.flatten(), y.flatten(), z.flatten()], axis=1)
-        self.K = 50
-        self.center = np.array([[0, 0, 0]])
+        #grid = np.array([-0.5, 0, 0.5])
+        #grid2 = np.array([-0.5, 0, 0.5])
+        #x, y, z = np.meshgrid(grid, grid2, grid2)
+        #self.center = np.stack([x.flatten(), y.flatten(), z.flatten()], axis=1)
+        self.center = np.array([[-0.5,-0.5,-0.5], [-0.5,-0.5,0],[0,-0.5,-0.5],[0,-0.5,0]])
+        self.K = 1000
+        #self.center = np.array([[-0.5, -0.5, 0], [0, 0, 0]])
 
 
     def sample(self, size, mode):
@@ -524,7 +525,7 @@ class Poisson3DPeaks:
         return exact
 
     def test_err(self, net):
-        mesh_x, mesh_y, mesh_z = self.grid(size=50)
+        mesh_x, mesh_y, mesh_z = self.grid(size=10)
         node = np.stack((mesh_x.flatten(), mesh_y.flatten(), mesh_z.flatten()), axis=1)
         node_aux = torch.from_numpy(node).to(device=self.dev)
         val = net(node_aux).detach().cpu().numpy().flatten()
@@ -533,8 +534,9 @@ class Poisson3DPeaks:
         return err
 
     def target_node_plot_together(self, loss, node_add, node_domain, proposal, path, num):
-        node_all = torch.cat([node_domain['in'].detach(),
-                              node_domain['bd'].detach()])
+        #node_all = torch.cat([node_domain['in'].detach(),
+                              #node_domain['bd'].detach()])
+        node_all = node_domain['in'].detach()
         node_add = node_add.detach().cpu().numpy()
         node_all = node_all.cpu().numpy()
         xs, xe, ys, ye, zs, ze = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1], self.zlim[0], self.zlim[1]
@@ -551,8 +553,8 @@ class Poisson3DPeaks:
         self.plot_vol(node, val, None, path + f'/{num}_loss.png')
         # plot node
         fig = go.Figure()
-        fig.add_trace(go.Scatter3d(name=f'$S_{{{num}}}$', x=node_all[:, 1], y=node_all[:, 2], z=node_all[:, 0], mode='markers', marker=dict(size=1, opacity=0.08, color='blue')))
-        fig.add_trace(go.Scatter3d(name='$\\mathcal{D}$', x=node_add[:, 1], y=node_add[:, 2], z=node_add[:, 0], mode='markers', marker=dict(size=1, opacity=1.0, color='red')))
+        fig.add_trace(go.Scatter3d(name=f'$S_{{{num}}}$', x=node_all[:, 0], y=node_all[:, 1], z=node_all[:, 2], mode='markers', marker=dict(size=1, opacity=0.08, color='blue')))
+        fig.add_trace(go.Scatter3d(name='$\\mathcal{D}$', x=node_add[:, 0], y=node_add[:, 1], z=node_add[:, 2], mode='markers', marker=dict(size=1, opacity=1.0, color='red')))
         fig.update_layout(scene=dict(
             xaxis=dict(range=[xs, xe], title='x'),
             yaxis=dict(range=[ys, ye], title='y'),
@@ -594,26 +596,41 @@ class Poisson3DPeaks:
             self.plot_vol(node, val, None, path + f'/{num}_proposal.png')
 
     def test_err_plot(self, net, path, num):
-        mesh_x, mesh_y, mesh_z = self.grid(50)
+        mesh_x, mesh_y, mesh_z = self.grid(60)
         node = np.stack((mesh_x.flatten(), mesh_y.flatten(), mesh_z.flatten()), axis=1)
         sol = self.exact(node)
         val = net(torch.from_numpy(node).to(device=self.dev)).detach().cpu().numpy().flatten()
         err = np.sqrt(np.sum(np.power(val - sol, 2)) / np.sum(np.power(sol, 2)))
         err_plt = val - sol
         # plot absolute error
-        self.plot_vol(node, err_plt, f'$e_r(u_{{{num}}}(\\cdot;\\theta))={round(err, 4)}$', path + f'/{num}_abs.png')
+        self.plot_vol(node, np.abs(err_plt), f'$e_r(u_{{{num}}}(\\cdot;\\theta))={round(err, 4)}$', path + f'/{num}_abs.png')
         # plot solution
         self.plot_vol(node, val, None, path + f'/{num}_sol.png')
         # plot exact
         if num == 1:
             self.plot_vol(node, sol.flatten(), None, path + f'/exact.png')
-
+        # plot slice
+        xs, xe, zs, ze = self.xlim[0], self.xlim[1], self.zlim[0], self.zlim[1]
+        inter_x = np.linspace(start=xs, stop=xe, num=256 + 1)
+        inter_z = np.linspace(start=zs, stop=ze, num=256 + 1)
+        mesh_x, mesh_z= np.meshgrid(inter_x, inter_z)
+        node = np.stack([mesh_x.flatten(), mesh_z.flatten()], axis=1)
+        node = np.stack([node[:, 0], np.ones_like(node[:,0])*(-0.5), node[:, 1]], axis=1)
+        val = net(torch.from_numpy(node).to(device=self.dev)).detach().cpu().numpy().flatten()
+        fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
+        plot = ax.pcolormesh(mesh_x, mesh_z, val.reshape(mesh_x.shape), shading='gouraud', cmap='jet', vmin=np.min(val), vmax=np.max(val))
+        fig.colorbar(plot, ax=ax, format="%1.1e")
+        ax.set_xlabel('$x$')
+        ax.set_ylabel('$z$')
+        fig.savefig(path + f'/{num}_sol_xz.png', dpi=300)
+        plt.close(fig)
+    
     @staticmethod
     def plot_vol(node, val, title, fname):
         fig = go.Figure(data=go.Volume(
-            x=node[:, 1],
-            y=node[:, 2],
-            z=node[:, 0],
+            x=node[:, 0],
+            y=node[:, 1],
+            z=node[:, 2],
             value=val,
             isomin=np.min(val),
             isomax=np.max(val),
@@ -631,7 +648,7 @@ class Poisson3DPeaks:
             scene=dict(
             xaxis=dict(title='x'),
             yaxis=dict(title='y'),
-            zaxis=dict(title='t'),
+            zaxis=dict(title='z'),
         ),
             scene_camera=camera,
             width=640,
@@ -747,11 +764,11 @@ class Poisson9DPeaks:
         return mesh_x, mesh_y
 
     def is_node_in(self, node):
-        node_aux = node.detach().cpu().numpy()
+        node_aux = np.copy(node)
         aux = np.full(node_aux[:, 0].shape, True)
         for i in range(self.dim):
             aux = aux & (self.axeslim[i, 0]<node_aux[:, i]) & (node_aux[:, i]<self.axeslim[i, 1])
-        return torch.from_numpy(aux).to(device=self.dev)
+        return aux
         
     def exact(self, node):
         node_exp = np.zeros_like(node[:, 0])
