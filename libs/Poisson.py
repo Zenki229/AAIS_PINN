@@ -672,7 +672,9 @@ class Poisson9DPeaks:
         # x, y, z = np.meshgrid(grid, grid2, grid2)
         # self.center = np.stack([x.flatten(), y.flatten(), z.flatten()], axis=1)
         self.K = 10
-        self.center = np.zeros((self.dim, ))
+        self.center = np.stack([np.zeros((self.dim, )), np.zeros((self.dim,))], axis=0)
+        self.center[0, 0], self.center[0, 1] = -0.5, -0.5
+        self.center[1, 0], self.center[1, 1] = 0.5, 0.5
 
     def sample(self, size, mode):
         if mode == 'in':
@@ -705,20 +707,23 @@ class Poisson9DPeaks:
         if mode == 'in':
             val_in = torch.zeros_like(node[:, 0])
             node_exp = torch.zeros_like(node[:, 0])
-            val_aux = torch.ones_like(node[:, 0])
-            for j in range(self.dim):
-                val_aux *= torch.exp(-self.K*(torch.pow((node[:, j]-self.center[j]), 2)))
-            node_exp += val_aux
-            for j in range(self.dim):
-                val_in += -node_exp * (
-                        torch.pow((-2 * self.K) * (node[:, j] - self.center[j]), 2) + (-2 * self.K))
+            for i in range(self.center.shape[0]):
+                val_aux = torch.ones_like(node[:, 0])
+                for j in range(self.dim):
+                    val_aux *= torch.exp(-self.K*(torch.pow((node[:, j]-self.center[i, j]), 2)))
+                node_exp += val_aux
+            for i in range(self.center.shape[0]):
+                for j in range(self.dim):
+                    val_in += -node_exp * (
+                        torch.pow((-2 * self.K) * (node[:, j] - self.center[i, j]), 2) + (-2 * self.K))
             return val_in
         elif mode == "bd":
             node_exp = torch.zeros_like(node[:, 0])
-            val_aux = torch.ones_like(node[:, 0])
-            for j in range(self.dim):
-                val_aux *= torch.exp(-self.K * (torch.pow((node[:, j] - self.center[j]), 2)))
-            node_exp += val_aux
+            for i in range(self.center.shape[0]):
+                val_aux = torch.ones_like(node[:, 0])
+                for j in range(self.dim):
+                    val_aux *= torch.exp(-self.K * (torch.pow((node[:, j] - self.center[i, j]), 2)))
+                node_exp += val_aux
             return node_exp
         else:
             raise ValueError('Invalid mode')
@@ -772,15 +777,18 @@ class Poisson9DPeaks:
         
     def exact(self, node):
         node_exp = np.zeros_like(node[:, 0])
-        val_aux = np.ones_like(node[:, 0])
-        for j in range(self.dim):
-            val_aux *= np.exp(-self.K * (np.power((node[:, j] - self.center[j]), 2)))
-        node_exp += val_aux
+        for i in range(self.center.shape[0]):
+            val_aux = np.ones_like(node[:, 0])
+            for j in range(self.dim):
+                val_aux *= np.exp(-self.K * (np.power((node[:, j] - self.center[i, j]), 2)))
+            node_exp += val_aux
         return node_exp
 
     def test_err(self, net):
-        node = self.sample(15000, 'in').detach().cpu().numpy()
-        node_aux = ss.multivariate_normal.rvs(mean=self.center, cov=np.diag(np.ones((self.dim,))*(1/(self.K*2))), size=5000)
+        node = self.sample(150000, 'in').detach().cpu().numpy()
+        node_aux = np.empty((0, self.dim))
+        for i in range(self.center.shape[0]):
+            node_aux = np.concatenate([node_aux, ss.multivariate_normal.rvs(mean=self.center[i, :], cov=np.diag(np.ones((self.dim,))*(1/(self.K*2))), size=5000)], axis=0)
         node = np.concatenate([node, node_aux], axis=0)
         node_aux = torch.from_numpy(node).to(device=self.dev)
         val = net(node_aux).detach().cpu().numpy().flatten()
@@ -797,7 +805,7 @@ class Poisson9DPeaks:
         mesh_x, mesh_y = self.grid(size=256)
         node = np.stack([mesh_x.flatten(), mesh_y.flatten()], axis=1)
         for i in range(self.dim - 2):
-            node = np.concatenate([node, np.ones_like(node[:, 0]).reshape(-1, 1) * self.center[i + 2]], axis=1)
+            node = np.concatenate([node, np.ones_like(node[:, 0]).reshape(-1, 1) * self.center[0, i + 2]], axis=1)
         val = loss(node).flatten()
         fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
         # plot loss
@@ -816,8 +824,8 @@ class Poisson9DPeaks:
         ax.scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.', s=np.ones_like(node_add[:, 0]), alpha=1.0,
                    label=f'$\\mathcal{{D}}$')
         ax.legend(loc='upper right', fontsize=12)
-        ax.set_xlabel('$x$')
-        ax.set_ylabel('$y$')
+        ax.set_xlabel('$x_1$')
+        ax.set_ylabel('$x_2$')
         fig.savefig(path + f'/{num}_node.png', dpi=300)
         plt.close(fig)
         if proposal:
@@ -835,7 +843,7 @@ class Poisson9DPeaks:
         mesh_x, mesh_y = self.grid(size=256)
         node = np.stack((mesh_x.flatten(), mesh_y.flatten()), axis=1)
         for i in range(self.dim-2):
-            node = np.concatenate([node, np.ones_like(node[:, 0]).reshape(-1,1)*self.center[i+2]], axis=1)
+            node = np.concatenate([node, np.ones_like(node[:, 0]).reshape(-1,1)*self.center[0, i+2]], axis=1)
         node_aux = torch.from_numpy(node).to(device=self.dev)
         val = net(node_aux).detach().cpu().numpy().flatten()
         exact = self.exact(node)
