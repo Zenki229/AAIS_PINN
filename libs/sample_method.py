@@ -153,7 +153,7 @@ class AAISt:
         self.log = log
         self.df = df
         self.weighted_sample = weighted_sample
-    def sample(self, target, node, judge, num_output,path):
+    def sample(self, target, node, judge, num_output, path):
         log = self.log
         dim = self.dim
         ess_lad = self.ess_dict['ladder']
@@ -162,8 +162,12 @@ class AAISt:
         count_lad = self.count_dict['ladder']
         count_total = self.count_dict['total']
         count_add = self.count_dict['add']
-        n = node.shape[0]
-        num = int(np.ceil(n * 0.1))
+        if node.shape[1] >= 3:
+          n = int(np.ceil(node.shape[0] * 0.1))
+          num = int(np.ceil(n * 0.1))
+        else:
+          n = node.shape[0]
+          num = int(np.ceil(n*0.1))
         if dim <=2:
           cov_init = 1/(np.power(0.1*num, 2))
         else:

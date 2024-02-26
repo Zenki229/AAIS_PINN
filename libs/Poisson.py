@@ -671,7 +671,7 @@ class Poisson9DPeaks:
         # grid2 = np.array([-0.5, 0.5])
         # x, y, z = np.meshgrid(grid, grid2, grid2)
         # self.center = np.stack([x.flatten(), y.flatten(), z.flatten()], axis=1)
-        self.K = 10
+        self.K = 100
         self.center = np.stack([np.zeros((self.dim, )), np.zeros((self.dim,))], axis=0)
         self.center[0, 0], self.center[0, 1] = -0.5, -0.5
         self.center[1, 0], self.center[1, 1] = 0.5, 0.5
@@ -706,16 +706,17 @@ class Poisson9DPeaks:
     def solve(self, mode, node):
         if mode == 'in':
             val_in = torch.zeros_like(node[:, 0])
-            node_exp = torch.zeros_like(node[:, 0])
             for i in range(self.center.shape[0]):
+                node_exp = torch.zeros_like(node[:, 0])
                 val_aux = torch.ones_like(node[:, 0])
                 for j in range(self.dim):
                     val_aux *= torch.exp(-self.K*(torch.pow((node[:, j]-self.center[i, j]), 2)))
                 node_exp += val_aux
-            for i in range(self.center.shape[0]):
+                val_aux = torch.zeros_like(node[:, 0])
                 for j in range(self.dim):
-                    val_in += -node_exp * (
+                    val_aux += -node_exp * (
                         torch.pow((-2 * self.K) * (node[:, j] - self.center[i, j]), 2) + (-2 * self.K))
+                val_in += val_aux
             return val_in
         elif mode == "bd":
             node_exp = torch.zeros_like(node[:, 0])
@@ -785,7 +786,7 @@ class Poisson9DPeaks:
         return node_exp
 
     def test_err(self, net):
-        node = self.sample(150000, 'in').detach().cpu().numpy()
+        node = self.sample(1500, 'in').detach().cpu().numpy()
         node_aux = np.empty((0, self.dim))
         for i in range(self.center.shape[0]):
             node_aux = np.concatenate([node_aux, ss.multivariate_normal.rvs(mean=self.center[i, :], cov=np.diag(np.ones((self.dim,))*(1/(self.K*2))), size=5000)], axis=0)
@@ -819,7 +820,7 @@ class Poisson9DPeaks:
         fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
         ax.set_xlim(xs - (xe - xs) * 0.05, xe + (xe - xs) * 0.20)
         ax.set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.20)
-        ax.scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.', s=np.ones_like(node_all[:, 0]), alpha=0.3,
+        ax.scatter(node_all[:, 0], node_all[:, 1], c='b', marker='.', s=np.ones_like(node_all[:, 0]), alpha=0.1,
                    label=f'$\\mathcal{{S}}_{{{num}}}$')
         ax.scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.', s=np.ones_like(node_add[:, 0]), alpha=1.0,
                    label=f'$\\mathcal{{D}}$')
@@ -840,6 +841,15 @@ class Poisson9DPeaks:
             plt.close()
 
     def test_err_plot(self, net, path, num):
+        node = self.sample(150000, 'in').detach().cpu().numpy()
+        node_aux = np.empty((0, self.dim))
+        for i in range(self.center.shape[0]):
+            node_aux = np.concatenate([node_aux, ss.multivariate_normal.rvs(mean=self.center[i, :], cov=np.diag(np.ones((self.dim,))*(1/(self.K*2))), size=5000)], axis=0)
+        node = np.concatenate([node, node_aux], axis=0)
+        node_aux = torch.from_numpy(node).to(device=self.dev)
+        val = net(node_aux).detach().cpu().numpy().flatten()
+        exact = self.exact(node)
+        err_show = np.sqrt(np.sum(np.power(val - exact, 2)) / np.sum(np.power(exact, 2)))
         mesh_x, mesh_y = self.grid(size=256)
         node = np.stack((mesh_x.flatten(), mesh_y.flatten()), axis=1)
         for i in range(self.dim-2):
@@ -854,7 +864,7 @@ class Poisson9DPeaks:
         plot = ax.pcolormesh(mesh_x, mesh_y, err_plt.reshape(mesh_x.shape), shading='gouraud', cmap='jet', vmin=0,
                              vmax=np.max(err_plt))
         fig.colorbar(plot, ax=ax, format="%1.1e")
-        ax.set_title(f'$e_r(u_{{{num}}}(\\cdot;\\theta))={round(err, 4)}$')
+        ax.set_title(f'$e_r(u_{{{num}}}(\\cdot;\\theta))={round(err_show, 4)}$')
         ax.set_xlabel('$x_1$')
         ax.set_ylabel('$x_2$')
         fig.savefig(path + f'/{num}_abs.png', dpi=300)
