@@ -90,8 +90,8 @@ Poisson3DPeaks:
 
 
 Poisson9DPeaks:
-  axeslim: [[-1, 1],[-1, 1],[-1, 1],[-1, 1],[-1, 1],[-1, 1],[-1, 1],[-1, 1],[-1, 1]]
-  input_size: 9
+  axeslim: [[-1, 1],[-1, 1],[-1, 1],[-1, 1],[-1, 1]]
+  input_size: 5
   output_size: 1
   weight: {'in': 1, 'bd': 1}
 

@@ -663,7 +663,7 @@ class Poisson3DPeaks:
 
 class Poisson9DPeaks:
     def __init__(self, dev, dtp, weight, axeslim, num_in, num_bd, input_size, output_size):
-        self.dim, self.dev, self.dtp, self.weight, self.axeslim, self.input_size, self.output_size = 9, dev, dtp, weight, np.array(axeslim), input_size, output_size
+        self.dim, self.dev, self.dtp, self.weight, self.axeslim, self.input_size, self.output_size = 5, dev, dtp, weight, np.array(axeslim), input_size, output_size
         self.criterion = torch.nn.MSELoss()
         self.physics = ['in', 'bd']
         self.size = {'in': num_in, 'bd': num_bd}
