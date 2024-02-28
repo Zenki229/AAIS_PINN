@@ -672,9 +672,12 @@ class PoissonNDPeaks:
         # x, y, z = np.meshgrid(grid, grid2, grid2)
         # self.center = np.stack([x.flatten(), y.flatten(), z.flatten()], axis=1)
         self.K = 100
-        self.center = np.stack([np.zeros((self.dim, )), np.zeros((self.dim,))], axis=0)
+        aux = np.zeros((1,self.dim))
+        center_num = 1
+        self.center = np.repeat(aux, center_num, axis=0)
+        #self.center = np.stack([np.zeros((self.dim, )), np.zeros((self.dim,))], axis=0)
         self.center[0, 0], self.center[0, 1] = -0.5, -0.5
-        self.center[1, 0], self.center[1, 1] = 0.5, 0.5
+        #self.center[1, 0], self.center[1, 1] = 0.5, 0.5
 
     def sample(self, size, mode):
         if mode == 'in':
@@ -844,7 +847,7 @@ class PoissonNDPeaks:
         node = self.sample(150000, 'in').detach().cpu().numpy()
         node_aux = np.empty((0, self.dim))
         for i in range(self.center.shape[0]):
-            node_aux = np.concatenate([node_aux, ss.multivariate_normal.rvs(mean=self.center[i, :], cov=np.diag(np.ones((self.dim,))*(1/(self.K*2))), size=5000)], axis=0)
+            node_aux = np.concatenate([node_aux, ss.multivariate_normal.rvs(mean=self.center[i, :], cov=np.diag(np.ones((self.dim,))*(1/(self.K*2))), size=15000)], axis=0)
         node = np.concatenate([node, node_aux], axis=0)
         node_aux = torch.from_numpy(node).to(device=self.dev)
         val = net(node_aux).detach().cpu().numpy().flatten()
