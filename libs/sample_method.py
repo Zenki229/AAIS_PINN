@@ -167,7 +167,10 @@ class AAISt:
         count_add = self.count_dict['add']
         n = int(np.ceil(node.shape[0] * 0.1))
         num = int(np.ceil(n * 0.1))
-        cov_init = 0.1
+        if self.dim<=2:
+          cov_init = 100/(n**2)
+        else:
+          cov_init = 0.1
         # validity check
         if (len(ess_lad) != len(self.a_lad)) | (len(count_lad) != len(self.a_lad)):
             raise ValueError('invalid ladder please check')
