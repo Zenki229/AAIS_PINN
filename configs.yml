@@ -89,8 +89,8 @@ Poisson3DPeaks:
   weight: {'in': 1, 'bd': 1}
 
 
-Poisson9DPeaks:
-  axeslim: [[-1, 1],[-1, 1],[-1, 1],[-1, 1],[-1, 1]]
+PoissonNDPeaks:
+  axeslim: [[-1, 1]]
   input_size: 5
   output_size: 1
   weight: {'in': 1, 'bd': 1}

@@ -44,9 +44,12 @@ class AAISGaussian:
         count_lad = self.count_dict['ladder']
         count_total = self.count_dict['total']
         count_add = self.count_dict['add']
-        n = node.shape[0]
-        num = int(np.ceil(n*0.1))
-        cov_init = 1/(np.power(0.1*num, 2))
+        n = int(np.ceil(node.shape[0] * 0.1))
+        num = int(np.ceil(n * 0.1))
+        if self.dim<=2:
+          cov_init = 100/(n**2)
+        else:
+          cov_init = 0.1
         #cov_init = 0.01
         # validity check
         if (len(ess_lad) != len(self.a_lad)) | (len(count_lad) != len(self.a_lad)):
@@ -162,16 +165,9 @@ class AAISt:
         count_lad = self.count_dict['ladder']
         count_total = self.count_dict['total']
         count_add = self.count_dict['add']
-        if node.shape[1] >= 3:
-          n = int(np.ceil(node.shape[0] * 0.1))
-          num = int(np.ceil(n * 0.1))
-        else:
-          n = node.shape[0]
-          num = int(np.ceil(n*0.1))
-        if dim <=2:
-          cov_init = 1/(np.power(0.1*num, 2))
-        else:
-          cov_init = 0.1
+        n = int(np.ceil(node.shape[0] * 0.1))
+        num = int(np.ceil(n * 0.1))
+        cov_init = 0.1
         # validity check
         if (len(ess_lad) != len(self.a_lad)) | (len(count_lad) != len(self.a_lad)):
             raise ValueError('invalid ladder please check')
