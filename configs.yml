@@ -91,7 +91,7 @@ Poisson3DPeaks:
 
 PoissonNDPeaks:
   axeslim: [[-1, 1]]
-  input_size: 5
+  input_size: 9
   output_size: 1
   weight: {'in': 1, 'bd': 1}
 
