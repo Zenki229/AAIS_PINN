@@ -1,37 +1,51 @@
-# Transformer Meets Boundary Value Inverse Problems
+# Annealed adaptive importance sampling method in PINNs for solving high dimensional partial differential equations 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/release/python-3100/)
 [![Pytorch 1.10](https://img.shields.io/badge/pytorch-1.10-blue.svg)](https://pytorch.org/)
 [![arXiv](https://img.shields.io/badge/arXiv-2209.14977-b31b1b.svg)](https://arxiv.org/abs/2209.14977)
 
 ## Summary
-A 2D attention operator is modified according to the integral operator formulation. The modified U-Net drop-in replacement is then used to solve an inverse problem (Electrical Impedance Tomography or EIT). The neural net is used to approximate the inclusion map using a single (or a few) current-to-voltage (Neumann-to-Dirichlet) data pairs. The boundary measurements are preprocessed using a PDE-based feature map.
+An adaptive sampling method called Annealed Adaptive Importance Sampling(AAIS) method is used in PINNs for solving high dimensional partial differential equations. The method could be used in many PDE works but here we may focus on the singular Poisson problems with multi peaks.
 
 
 ## Training
-Training model: `--model` args can be `uit` (integral transformer), `ut` (with traditional softmax normalization), `hut` (hybrid ut with linear attention), `xut` (cross-attention with hadamard product interaction), `fno2d` (Fourier neural operator 2d), `unet` (traditional UNet with CNN, big baseline, 33m params), `unets` (UNet with the same number of layers with U-integral transformer)
+Training model:
 
-All different models' settings can be found in `configs.yml`.
-Default is to train a single input-channel
+`--pde` includes various type of PDEs whose name is in `configs.yml` and `libs`. If you want to test other PDEs please refer to any PDE files in `libs` like `Poisson.py`, added PDEs should follow the structure of our PDE Class Object structures.
+
+`--strategy` includes four type adaptive resampling strategy: `Uni_resample`, `RAD_resample`, `AAIS_g_resample`, `AAIS_t_resample`
+
+other args could be seen in `main.py` or refer to `--help` in command.
+
+All different models' settings can be found in `configs.yml`, you could change some settings there.
+
+For example if you want to test 2D Poisson problems with only one peak, just go with:
 ```bash
-python run_train.py --model uit --parts 2 4 5 6
+python main.py --cuda_dev 0 --pde Poisson2D1Peak --strategy AAIS_t_resample --num_sample 1500 500 500 --lr 1e-4 3e-1 --epoch 500 2000 500 2000 --num_search 60000 --dirname 'Your_File_Name' --max_iter 20
 ```
 
-## Evaluation
-```bash
-python evaluation.py --model uit # base integral transformer
-python evaluation.py --model uit-c3 --channels 3 # 3 channels
-```
+the code could create a directory `/Project_Path/results/Poisson2D1Peak/Your_File_Name`, the loss and sampling results can be seen in `/img`, solutions and absolute errors are plotted in '/test'. Running logs and settings are saved in `/logger.log` and `/inform.txt`.
+
+By The Way, if you want to rerun the high dimensional Poisson problems `PoissonNDpeaks`, firstly the dimensions could be changed in `configs.yml`, just change `input_size` of `PoissonNDpeaks`. If you want to add more centers or change the scaling parameters, please go to '/libs/Poisson.py' and at line 670-675. It is recommended to change the coordinates of centers in the first two dimensions since the plot would project the solution into $x_1x_2$-plane.
+
+If you have some problems, please report.
 
 ## Reference
-```bibtex
-@article{2022GuoCaoChenTransformer,
-  title={Transformer Meets Boundary Value Inverse Problems},
-  author={Guo, Ruchi and Cao, Shuhao and Chen, Long},
-  journal={arXiv preprint arXiv:2209.14977},
-  year={2022}
-}
-```
+
+[//]: # (```bibtex)
+
+[//]: # (@article{2022GuoCaoChenTransformer,)
+
+[//]: # (  title={Transformer Meets Boundary Value Inverse Problems},)
+
+[//]: # (  author={Guo, Ruchi and Cao, Shuhao and Chen, Long},)
+
+[//]: # (  journal={arXiv preprint arXiv:2209.14977},)
+
+[//]: # (  year={2022})
+
+[//]: # (})
+
+[//]: # (```)
 
 ## Acknowledgments
-This work is supported in part by National Science Foundation grants DMS-1913080, DMS-2012465, and DMS-2136075. No additional revenues are related to this work.

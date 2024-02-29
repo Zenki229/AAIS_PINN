@@ -667,17 +667,12 @@ class PoissonNDPeaks:
         self.criterion = torch.nn.MSELoss()
         self.physics = ['in', 'bd']
         self.size = {'in': num_in, 'bd': num_bd}
-        # grid = np.array([-0.5, 0, 0.5])
-        # grid2 = np.array([-0.5, 0.5])
-        # x, y, z = np.meshgrid(grid, grid2, grid2)
-        # self.center = np.stack([x.flatten(), y.flatten(), z.flatten()], axis=1)
         self.K = 100
         aux = np.zeros((1,self.dim))
         center_num = 2
         self.center = np.repeat(aux, center_num, axis=0)
-        #self.center = np.stack([np.zeros((self.dim, )), np.zeros((self.dim,))], axis=0)
-        self.center[0, 0], self.center[0, 1] = -0.5, -0.5
-        self.center[1, 0], self.center[1, 1] = 0.5, 0.5
+        self.center[0, 0], self.center[0, 1] = 0.5, 0.5
+        self.center[1, 0], self.center[1, 1] = -0.5, 0.5
 
     def sample(self, size, mode):
         if mode == 'in':
