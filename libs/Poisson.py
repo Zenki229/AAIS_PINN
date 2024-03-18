@@ -672,7 +672,7 @@ class PoissonNDPeaks:
         center_num = 2
         self.center = np.repeat(aux, center_num, axis=0)
         self.center[0, 0], self.center[0, 1] = 0.5, 0.5
-        self.center[1, 0], self.center[1, 1] = -0.5, 0.5
+        self.center[1, 0], self.center[1, 1] = -0.5, -0.5
 
     def sample(self, size, mode):
         if mode == 'in':
