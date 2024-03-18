@@ -21,9 +21,13 @@ class RAD:
 
     def sample(self, target, node, judge, num_output, path):
         err = target(node)
+        integration = np.sum(err)
         err_normal = err/np.sum(err)
         ind = np.random.choice(a=len(node), size=num_output, replace=False, p=err_normal)
-        return node[ind, :], None
+
+        def proposal(node):
+            return target(node)/integration
+        return node[ind, :], proposal
 
 
 class AAISGaussian:
