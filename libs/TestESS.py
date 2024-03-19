@@ -35,13 +35,17 @@ class Poisson2D9Peaks:
         return ((self.xlim[0] < node[:, 0]) & (node[:, 0] < self.xlim[1])
                 & (self.ylim[0] < node[:, 1]) & (node[:, 1] < self.ylim[1]))
 
+    def exact_int(self):
+        return 0.05605*9
+
     def ess_plot(self, node_search, node_add, loss, proposal, path, num):
         xs, xe, ys, ye = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1]
         mesh_x, mesh_y = self.grid(size=256)
         node = np.stack((mesh_x.flatten(), mesh_y.flatten()), axis=1)
         val = loss(node).reshape(mesh_x.shape)
-        w = loss(node_add)/(proposal(node_add))
-        ess = 1-np.var(w)/(np.var(w)+np.mean(w)**2)
+        integration = np.mean(loss(node_add))
+        exact_int = self.exact_int()
+        err = np.abs(exact_int-integration)/np.abs(exact_int)
         fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
         # plot loss
         plot = ax.pcolormesh(mesh_x, mesh_y, val, shading='gouraud', cmap='jet', vmin=0, vmax=np.max(val))
@@ -56,7 +60,7 @@ class Poisson2D9Peaks:
         ax.set_ylim(ys - (ye - ys) * 0.05, ye + (ye - ys) * 0.20)
         ax.scatter(node_search[:, 0], node_search[:, 1], c='b', marker='.', s=np.ones_like(node_search  [:, 0]), alpha=0.3, label=f'$\\mathcal{{S}}_{{{num}}}$')
         ax.scatter(node_add[:, 0], node_add[:, 1], c='r', marker='.', s=np.ones_like(node_add[:, 0]), alpha=1.0, label=f'$\\mathcal{{D}}$')
-        ax.set_title(f'$ESS={round(ess, 4)}$')
+        ax.set_title(f'$Err={round(err, 4)}$')
         ax.legend(loc='upper right', fontsize=12)
         ax.set_xlabel('$x$')
         ax.set_ylabel('$y$')

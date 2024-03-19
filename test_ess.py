@@ -11,7 +11,7 @@ except FileExistsError:
 def main():
     parser = argparse.ArgumentParser(description='Training')
     # system and basic setting
-    parser.add_argument('--dirname', type=str, default="debug",
+    parser.add_argument('--dirname', type=str, default="debug1",
                         help='name of current saving folder in ./results, '
                              'default: "pde_name"+"domain_name"+"strategy_name"+debug')
     # function setting
@@ -22,7 +22,7 @@ def main():
                         help='adaptive strategy: combination=SampleMethod_NodeCombineMethod, SampleMethod has "Uni", "AAIS_g", "AAIS_t", "RAD", NodeCombineMethod has "resample')
     parser.add_argument('--num_sample', nargs='+', type=int, default=500,
                         help='number of samples from the sample method  ')
-    parser.add_argument('--num_search', type=int, default=100000,
+    parser.add_argument('--num_search', type=int, default=200000,
                         help='num of nosed used to search in the domain.')
     # train set
     args = parser.parse_args()
