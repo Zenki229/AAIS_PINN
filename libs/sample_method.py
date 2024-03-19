@@ -21,7 +21,7 @@ class RAD:
 
     def sample(self, target, node, judge, num_output, path):
         err = target(node)
-        integration = np.sum(err)
+        integration = np.mean(err)
         err_normal = err/(np.sum(err))
         ind = np.random.choice(a=len(node), size=num_output, replace=False, p=err_normal)
 
