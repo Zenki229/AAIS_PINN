@@ -123,13 +123,6 @@ Wave3D:
   output_size: 1
   weight: {'in': 1, 'bd': 0.1, 'init': 0.1}
 
-Poisson9Peaks_testESS:
-  xlim: [-1, 1]
-  ylim: [-1, 1]
-  input_size: 2
-  output_size: 1
-  weight: {'in': 1, 'bd': 1}
-
 
 AAIS_g:
   a_ladder: [0.7,0.9,1.0]

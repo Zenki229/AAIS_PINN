@@ -1,7 +1,7 @@
 from libs import *
 
 dtp = torch.float64
-
+device = torch.device('cpu')
 try:
     os.mkdir('./results')
 except FileExistsError:
@@ -15,24 +15,22 @@ def main():
                         help='name of current saving folder in ./results, '
                              'default: "pde_name"+"domain_name"+"strategy_name"+debug')
     # function setting
-    parser.add_argument('--func', type=str, default='Poisson9Peaks_testESS',
+    parser.add_argument('--func', type=str, default='Poisson2D9Peak',
                         help='pde type: default is Poisson9Peaks. Others please see in libs')
     # adaptive sample setting
-    parser.add_argument('--strategy', type=str, default='AAIS_t_resample',
+    parser.add_argument('--strategy', type=str, default='RAD',
                         help='adaptive strategy: combination=SampleMethod_NodeCombineMethod, SampleMethod has "Uni", "AAIS_g", "AAIS_t", "RAD", NodeCombineMethod has "resample')
-    parser.add_argument('--num_sample', nargs='+', type=int, default=[200],
-                        help='number of samples from the sample method')
-    parser.add_argument('--num_search', type=int, default=1000,
+    parser.add_argument('--num_sample', nargs='+', type=int, default=500,
+                        help='number of samples from the sample method  ')
+    parser.add_argument('--num_search', type=int, default=100000,
                         help='num of nosed used to search in the domain.')
-    parser.add_argument('--weighted_sample', type=int, default=1,
-                        help='weighted_sampling or not for mixture, 0 for False, 1 for True')
     # train set
     args = parser.parse_args()
     try:
-        os.mkdir('./results/' + f'{args.pde}/')
+        os.mkdir('./results/' + f'{args.func}_ess/')
     except FileExistsError:
         pass
-    path_father = './results/' + f'{args.pde}/' + args.pde + '_' + args.strategy + '_' + args.dirname
+    path_father = './results/' + f'{args.func}_ess/' + args.func + '_' + args.strategy + '_' + args.dirname
     try:
         os.mkdir(path_father)
     except FileExistsError:
@@ -43,9 +41,6 @@ def main():
                 os.rmdir(os.path.join(root, name))
     try:
         os.mkdir(path_father+'/img')
-        os.mkdir(path_father+'/net')
-        os.mkdir(path_father+'/train')
-        os.mkdir(path_father+'/test')
     except FileExistsError:
         pass
     logger = log_gen(path=path_father)
@@ -54,9 +49,9 @@ def main():
     configs = load_yaml(r'./configs.yml', key=args.func)
     with open(path_father + "/inform.txt", "a") as f:
         f.write(str(configs) + "\n")
-    if 'Poisson9Peaks' in args.func:
-        from libs.TestESS import TestESS
-        pde = TestESS(dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1], **configs)
+    if 'Poisson2D9Peak' in args.func:
+        from libs.TestESS import Poisson2D9Peaks
+        pde = Poisson2D9Peaks(dtp=dtp, dev=device, **configs)
     else:
         raise NotImplementedError
     if 'AAIS_t' in args.strategy:
@@ -87,18 +82,15 @@ def main():
         raise NotImplementedError
     params = {
         'func': pde,
-        'optim_epoch': args.epoch,
         'file_path': path_father,
-        'num_add': args.num_sample[2],
+        'num_add': args.num_sample,
         'num_search': args.num_search,
         'logger': logger,
-        'sample_method': sample_method_choose,
-        'max_iter': args.max_iter,
+        'sample_method': sample_method_choose
     }
     go_train = ESSResample(**params)
     go_train.forward()
-    loss_err_plot(path_father=path_father)
-    shape_ess_plot(path_father=path_father)
+
 
 class ESSResample:
     def __init__(self, func, file_path, logger: logging, num_add, num_search, sample_method):
@@ -112,23 +104,15 @@ class ESSResample:
     def forward(self):
         def target(node_cpu):
             # node:cpu
-            return np.where(self.func.is_node_in(node_cpu),
-                            self.func.form(node_cpu), 0)
-        ess = np.zeros((0, 1))
-        shape = np.zeros((0, 1))
-        np.save(self.file_path+'/train/'+'ess.npy', ess)
-        np.save(self.file_path + '/train/' + 'shape.npy', shape)
+            return np.where(self.func.is_node_in(node_cpu), self.func.solve(node_cpu), 0)
         log = self.logger
-        node_domain = {}
-        node_search = self.func.sample(self.num_search, 'in')
-        node = node_domain.copy()
+        node_search = self.func.sample(self.num_search)
         t1 = time.time()
-        node_loss, proposal = self.sample_method.sample(target, node_search, self.func.is_node_in, self.num_resap, path=self.file_path)
-        self.func.target_node_plot_together(loss=target,
-                                           node_add=node_loss,
-                                           node_domain=node_domain,
-                                           proposal=proposal,
-                                           path=self.file_path + '/img',
-                                           num=0)
+        node_sample, proposal = self.sample_method.sample(target, node_search, self.func.is_node_in, self.num_resap, path=self.file_path)
+        self.func.ess_plot(loss=target, node_add=node_sample, node_search=node_search, proposal=proposal, path=self.file_path + '/img', num=0)
         t2 = time.time() - t1
         log.info('=' * 3 + 'End sample time' + time.strftime("%H:%M:%S", time.gmtime(t2)) + '=' * 10)
+
+
+if __name__ == '__main__':
+    main()
