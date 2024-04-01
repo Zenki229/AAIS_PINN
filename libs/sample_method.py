@@ -174,7 +174,7 @@ class AAISt:
         if self.dim<=1:
           cov_init = 100/(n**2)
         else:
-          cov_init = 0.1
+          cov_init = 0.5
         # validity check
         if (len(ess_lad) != len(self.a_lad)) | (len(count_lad) != len(self.a_lad)):
             raise ValueError('invalid ladder please check')
