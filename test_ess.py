@@ -11,18 +11,18 @@ except FileExistsError:
 def main():
     parser = argparse.ArgumentParser(description='Training')
     # system and basic setting
-    parser.add_argument('--dirname', type=str, default="debug",
+    parser.add_argument('--dirname', type=str, default="debug1",
                         help='name of current saving folder in ./results, '
                              'default: "pde_name"+"domain_name"+"strategy_name"+debug')
     # function setting
-    parser.add_argument('--func', type=str, default='Poisson2D9Peak',
+    parser.add_argument('--func', type=str, default='Poisson2D1Peak',
                         help='pde type: default is Poisson9Peaks. Others please see in libs')
     # adaptive sample setting
-    parser.add_argument('--strategy', type=str, default='RAD',
+    parser.add_argument('--strategy', type=str, default='AAIS_t',
                         help='adaptive strategy: combination=SampleMethod_NodeCombineMethod, SampleMethod has "Uni", "AAIS_g", "AAIS_t", "RAD", NodeCombineMethod has "resample')
-    parser.add_argument('--num_sample', nargs='+', type=int, default=500,
+    parser.add_argument('--num_sample', nargs='+', type=int, default=250,
                         help='number of samples from the sample method  ')
-    parser.add_argument('--num_search', type=int, default=100000,
+    parser.add_argument('--num_search', type=int, default=5000,
                         help='num of nosed used to search in the domain.')
     # train set
     args = parser.parse_args()
@@ -41,6 +41,7 @@ def main():
                 os.rmdir(os.path.join(root, name))
     try:
         os.mkdir(path_father+'/img')
+        os.mkdir(path_father + '/train')
     except FileExistsError:
         pass
     logger = log_gen(path=path_father)
@@ -52,6 +53,9 @@ def main():
     if 'Poisson2D9Peak' in args.func:
         from libs.TestESS import Poisson2D9Peaks
         pde = Poisson2D9Peaks(dtp=dtp, dev=device, **configs)
+    elif 'Poisson2D1Peak' in args.func:
+        from libs.TestESS import Poisson2D1Peak
+        pde = Poisson2D1Peak(dtp=dtp, dev=device, **configs)
     else:
         raise NotImplementedError
     if 'AAIS_t' in args.strategy:
@@ -61,7 +65,7 @@ def main():
             configs = load_yaml(r'./configs.yml', key='AAIS_t')
         with open(path_father + "/inform.txt", "a") as f:
             f.write(str(configs) + "\n")
-        sample_method_choose = AAISt(dim=pde.dim, log=logger, weighted_sample=args.weighted_sample, **configs)
+        sample_method_choose = AAISt(dim=pde.dim, log=logger, weighted_sample=1, **configs)
     elif 'AAIS_g' in args.strategy:
         if 'highess' in args.strategy:
             configs = load_yaml(r'./configs.yml', key='AAIS_g_highess')
@@ -69,7 +73,7 @@ def main():
             configs = load_yaml(r'./configs.yml', key='AAIS_g')
         with open(path_father + "/inform.txt", "a") as f:
             f.write(str(configs) + "\n")
-        sample_method_choose = AAISGaussian(dim=pde.dim, log=logger, weighted_sample=args.weighted_sample, **configs)
+        sample_method_choose = AAISGaussian(dim=pde.dim, log=logger, weighted_sample=1, **configs)
     elif 'RAD' in args.strategy:
         with open(path_father + "/inform.txt", "a") as f:
             f.write('RAD' + "\n")
@@ -105,7 +109,13 @@ class ESSResample:
         def target(node_cpu):
             # node:cpu
             return np.where(self.func.is_node_in(node_cpu), self.func.solve(node_cpu), 0)
+
+        ess = np.zeros((0, 1))
+        shape = np.zeros((0, 1))
+        np.save(self.file_path + '/train/' + 'ess.npy', ess)
+        np.save(self.file_path + '/train/' + 'shape.npy', shape)
         log = self.logger
+        loss_save = 100000.0
         node_search = self.func.sample(self.num_search)
         t1 = time.time()
         node_sample, proposal = self.sample_method.sample(target, node_search, self.func.is_node_in, self.num_resap, path=self.file_path)
