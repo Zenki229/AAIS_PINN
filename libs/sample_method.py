@@ -48,7 +48,7 @@ class AAISGaussian:
         count_lad = self.count_dict['ladder']
         count_total = self.count_dict['total']
         count_add = self.count_dict['add']
-        n = int(np.ceil(node.shape[0] * 0.1))
+        n = int(np.ceil(node.shape[0] * 1.0))
         num = int(np.ceil(n * 0.1))
         if self.dim<=1:
           cov_init = 100/(n**2)
@@ -169,7 +169,7 @@ class AAISt:
         count_lad = self.count_dict['ladder']
         count_total = self.count_dict['total']
         count_add = self.count_dict['add']
-        n = int(np.ceil(node.shape[0] * 0.1))
+        n = int(np.ceil(node.shape[0] * 1.0))
         num = int(np.ceil(n * 0.1))
         if self.dim<=1:
           cov_init = 100/(n**2)

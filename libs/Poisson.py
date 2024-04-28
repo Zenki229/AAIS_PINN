@@ -8,6 +8,7 @@ class Poisson2D1Peak:
         self.physics = ['in', 'bd']
         self.size = {'in': num_in, 'bd': num_bd}
 
+
     def sample(self, size, mode):
         xs, xe, ys, ye = self.xlim[0], self.xlim[1], self.ylim[0], self.ylim[1]
         x_len, y_len = xe - xs, ye - ys
@@ -155,6 +156,10 @@ class Poisson2D1Peak:
         exact = np.exp(-1000 * ((node[:, 0] - 0.5) ** 2 + (node[:, 1] - 0.5) ** 2))
         err = np.sqrt(np.sum(np.power(val - exact, 2)) / np.sum(np.power(exact, 2)))
         err_plt = np.abs(val - exact)
+        err_max = np.max(err_plt)
+        # max_err saving
+        with open(path+"/maxerr.txt", "a") as f:
+          f.write(f'{num}:'+f'{err_max}'+"\n")
         # err plot
         fig, ax = plt.subplots(layout='constrained', figsize=(6.4, 4.8))
         plot = ax.pcolormesh(mesh_x, mesh_y, err_plt.reshape(mesh_x.shape), shading='gouraud', cmap='jet', vmin=0, vmax=np.max(err_plt))
@@ -839,11 +844,12 @@ class PoissonNDPeaks:
             plt.close()
 
     def test_err_plot(self, net, path, num):
-        node = self.sample(150000, 'in').detach().cpu().numpy()
+        node = self.sample(100000, 'in').detach().cpu().numpy()
+        node_bd = self.sample(10000, 'bd').detach().cpu().numpy()
         node_aux = np.empty((0, self.dim))
         for i in range(self.center.shape[0]):
             node_aux = np.concatenate([node_aux, ss.multivariate_normal.rvs(mean=self.center[i, :], cov=np.diag(np.ones((self.dim,))*(1/(self.K*2))), size=15000)], axis=0)
-        node = np.concatenate([node, node_aux], axis=0)
+        node = np.concatenate([node, node_bd,node_aux], axis=0)
         node_aux = torch.from_numpy(node).to(device=self.dev)
         val = net(node_aux).detach().cpu().numpy().flatten()
         exact = self.exact(node)
