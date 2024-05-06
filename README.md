@@ -2,7 +2,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/release/python-3100/)
 [![Pytorch 1.10](https://img.shields.io/badge/pytorch-1.10-blue.svg)](https://pytorch.org/)
-[![arXiv](https://img.shields.io/badge/arXiv-2209.14977-b31b1b.svg)](https://arxiv.org/abs/2209.14977)
+
+[//]: # ([![arXiv]&#40;https://img.shields.io/badge/arXiv-2209.14977-b31b1b.svg&#41;]&#40;https://arxiv.org/abs/2209.14977&#41;)
 
 ## Summary
 An adaptive sampling method called Annealed Adaptive Importance Sampling(AAIS) method is used in PINNs for solving high dimensional partial differential equations. The method could be used in many PDE works but here we may focus on the singular Poisson problems with multi peaks.
@@ -30,22 +31,3 @@ By The Way, if you want to rerun the high dimensional Poisson problems `PoissonN
 
 If you have some problems, please report.
 
-## Reference
-
-[//]: # (```bibtex)
-
-[//]: # (@article{2022GuoCaoChenTransformer,)
-
-[//]: # (  title={Transformer Meets Boundary Value Inverse Problems},)
-
-[//]: # (  author={Guo, Ruchi and Cao, Shuhao and Chen, Long},)
-
-[//]: # (  journal={arXiv preprint arXiv:2209.14977},)
-
-[//]: # (  year={2022})
-
-[//]: # (})
-
-[//]: # (```)
-
-## Acknowledgments
