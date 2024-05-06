@@ -10,6 +10,7 @@ class MixGaussian:
     def __init__(self, params, dim):
         self.params = params
         self.dim = dim
+        self.cov_init = 0.1
 
     def sampling(self, num):
         params = self.params
@@ -98,7 +99,7 @@ class MixGaussian:
         ind = np.argsort(target(node))[::-1]
         pnt = node[ind][0, :]
         mean = pnt.copy()
-        cov = np.diag(np.ones(self.dim) * 1 / (num * num * 10 * 10))
+        cov = np.diag(np.ones(self.dim) * self.cov_init)
         p = MixGaussian(np.concatenate([np.ones(1).reshape(1, 1), mean.reshape(1, -1), cov.reshape(1, -1)], axis=1),
                           dim=self.dim)
         node_p = p.sampling(num)
@@ -200,7 +201,7 @@ class Mixt:
         self.params = params
         self.dim = dim
         self.df = df
-        self.cov_init = 0.01
+        self.cov_init = 0.1
 
     def sampling(self, num):
         params = self.params
