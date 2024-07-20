@@ -10,6 +10,16 @@ NSCylinder:
   output_size: 3
   weight: {'in': 1, 'wall':1, 'inflow':1, 'outflow':1, "init":1}
 
+FBDF2D:
+  xlim: [ 0, 1 ]
+  tlim: [ 0, 1 ]
+  input_size: 2
+  output_size: 1
+  weight: { 'in': 1, 'bd': 1, "reg": 1 }
+  noise: 0.0001
+  reg: 0.01
+  samp_obs: 100
+
 NSwake:
   tlim: [0, 7]
   xlim: [1, 8]
