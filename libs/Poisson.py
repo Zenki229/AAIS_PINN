@@ -1,6 +1,7 @@
 from .utils import *
 import scipy.stats as ss
 
+
 class Poisson2D1Peak:
     def __init__(self, dev, dtp, weight, xlim, ylim, num_in, num_bd, input_size, output_size):
         self.dim, self.dev, self.dtp, self.weight, self.xlim, self.ylim, self.input_size, self.output_size = 2, dev, dtp, weight, xlim, ylim, input_size, output_size

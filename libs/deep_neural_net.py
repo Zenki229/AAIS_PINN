@@ -27,3 +27,11 @@ class DeepNeuralNet(torch.nn.Module):
     def forward(self, x):
         out = self.layers(x)
         return out
+
+    @staticmethod
+    def load_model(model_path):
+        model = torch.load(model_path)
+        return model
+
+    def save_model(self, model_path):
+        torch.save(self.state_dict(), model_path)
