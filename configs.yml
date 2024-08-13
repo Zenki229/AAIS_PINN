@@ -1,3 +1,14 @@
+FDF2D:
+  xlim: [0, 1 ]
+  tlim: [ 0, 1 ]
+  MC_size: 1000
+  eps: 1e-9
+  alpha: 0.5
+  input_size: 2
+  output_size: 1
+  weight: { 'in': 1, 'bd': 1, "init": 1 }
+
+
 NSCylinder:
   xlim: [0, 2.2]
   ylim: [0, 0.41]

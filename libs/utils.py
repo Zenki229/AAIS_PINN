@@ -27,7 +27,7 @@ import torch.nn as nn
 from tqdm.auto import tqdm
 import h5py
 from scipy.io import loadmat
-matplotlib.use('agg')
+# matplotlib.use('agg')
 from matplotlib import rc, rcParams, tri, cm
 from matplotlib.colors import TwoSlopeNorm
 import matplotlib.pyplot as plt
