@@ -17,7 +17,7 @@ def main():
                         help='name of current saving folder in ./results, '
                              'default: "pde_name"+"domain_name"+"strategy_name"+debug')
     # pde setting
-    parser.add_argument('--pde', type=str, default='Poisson9DPeaks',
+    parser.add_argument('--pde', type=str, default='FBDF2D',
                         help='pde type: default is Poisson2D1Peak. Others please see in libs')
     # net and optimizer
     parser.add_argument('--NeuralShape', nargs='+', type=int, default=[20, 7],
@@ -27,7 +27,7 @@ def main():
     parser.add_argument('--epoch', nargs='+', type=int, default=[10, 10, 10, 10],
                         help='number of epochs, [adam_pretrain, lbfgs_pretrain, adam, lebfgs] the pre-training use adam of pretrain_epoch+lbfgs_epoch, if lbfgs_epoch=0, means no lbfgs in training. ')
     # adaptive sample setting
-    parser.add_argument('--strategy', type=str, default='AAIS_t_resample',
+    parser.add_argument('--strategy', type=str, default='Uni_resample',
                         help='adaptive strategy: combination=SampleMethod_NodeCombineMethod, SampleMethod has "Uni", "AAIS_g", "AAIS_t", "RAD", NodeCombineMethod has "resample')
     parser.add_argument('--num_sample', nargs='+', type=int, default=[100, 100, 200],
                         help='num sampled in the domain, num[0] means the number of points uniformly sampled in the domain during the pretrain, num[1] means the number of points sampled on the boundary(including initial hypersurface), num[2] means the resampled(or added) points in the domain by different sampling methods.')
@@ -96,6 +96,10 @@ def main():
     elif 'Wave3D' in args.pde:
         from libs.Wave import Wave3D
         pde = Wave3D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1],
+                     **configs)
+    elif 'FBDF2D' in args.pde:
+        from libs.FracBDF import FBDF2D
+        pde = FBDF2D(dev=device, dtp=dtp, num_in=args.num_sample[0], num_bd=args.num_sample[1],
                      **configs)
     else:
         raise NotImplementedError
